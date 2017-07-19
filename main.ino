@@ -17,10 +17,10 @@ void setup() {
 }
 
 void loop() {
-  static int count;
-  LOG("loop count: %u", count++);
+  auto time_ms = millis();
+  LOG("loop: time_ms %lu", time_ms);
 
-  g_app->ShowLed();
+  g_app->ShowLed(time_ms);
 
   g_app->Delay(kMsPerFrame);
 }

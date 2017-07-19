@@ -10,9 +10,9 @@ void App::Init()
 	led_.Init();
 }
 
-void App::ShowLed()
+void App::ShowLed(uint32_t time_ms)
 {
-	led_.Show();
+	led_.Show(time_ms);
 }
 
 void App::Delay(uint32_t ms)

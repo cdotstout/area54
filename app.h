@@ -1,6 +1,7 @@
 #pragma once
 
 #include "led.h"
+#include "program.h"
 
 class App {
 public:
@@ -8,10 +9,9 @@ public:
 
   void Init();
 
-  void ShowLed(uint32_t time_ms);
-
-  void Delay(uint32_t ms);
+  void Update(uint32_t time_ms);
 
 private:
   Led led_;
+  std::unique_ptr<Program> program_;
 };

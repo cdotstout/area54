@@ -17,10 +17,13 @@ void setup() {
 }
 
 void loop() {
+  static unsigned long start_time = 0;
   auto time_ms = millis();
-  LOG("loop: time_ms %lu", time_ms);
 
-  g_app->ShowLed(time_ms);
+  if (start_time == 0)
+  	start_time = time_ms;
 
-  g_app->Delay(kMsPerFrame);
+  g_app->Update(time_ms - start_time);
+
+  delay(kMsPerFrame);
 }

@@ -23,11 +23,16 @@ Led::~Led() { delete leds_; }
 
 void Led::SetColor(uint8_t red, uint8_t green, uint8_t blue)
 {
+	if (red == red_ && green == green_ && blue == blue_)
+		return;
+
 	red_ = red;
 	green_ = green;
 	blue_ = blue;
 	fill_solid(leds_, num_leds_, CRGB(red_, green_, blue_));
 }
+
+void Led::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(brightness)); }
 
 void Led::Init()
 {
@@ -35,23 +40,4 @@ void Led::Init()
 	SetColor(0,0,255);
 }
 
-void Led::Show(uint32_t time_ms)
-{
-	time_ms = time_ms % (fade_in_.duration() + fade_out_.duration());
-
-	uint32_t brightness;
-	if (time_ms < fade_in_.duration())
-		brightness = fade_in_.get(time_ms);
-	else
-		brightness = fade_out_.get(time_ms - fade_in_.duration());
-
-	LOG("brightness: %u", brightness);
-
-	FastLED.setBrightness(brightness);
-	FastLED.show();
-}
-
-void Led::Delay(uint32_t ms)
-{  
-	FastLED.delay(ms);
-}
+void Led::Show() { FastLED.show(); }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "log.h"
+#include <vector>
 
 class Animation {
 public:
@@ -20,4 +20,36 @@ private:
 	uint32_t start_;
 	uint32_t end_;
 	uint32_t duration_;
+};
+
+class AnimationSequence {
+public:
+	void Add(Animation animation) 
+	{		
+		sequence_.push_back(animation); 
+		duration_ += animation.duration();
+		iter_ = sequence_.begin();
+	}
+
+	// time must be nondecreasing
+	uint32_t get(uint32_t time) 
+	{
+		uint32_t time_delta = time - time_base_;
+		uint32_t value = iter_->get(time_delta);
+		if (time_delta >= iter_->duration()) {
+			time_base_ += iter_->duration();
+			iter_++;
+			if (iter_ == sequence_.end())
+				iter_ = sequence_.begin();
+		}
+		return value;
+	}
+
+	uint32_t duration() { return duration_; }
+
+private:
+	std::vector<Animation> sequence_;
+	std::vector<Animation>::iterator iter_;
+	uint32_t duration_ = 0;
+	uint32_t time_base_ = 0;
 };

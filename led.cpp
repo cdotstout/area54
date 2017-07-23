@@ -21,6 +21,8 @@ Led::Led(uint32_t num_leds) : num_leds_(num_leds)
 
 Led::~Led() { delete leds_; }
 
+void Led::Clear() { FastLED.clear(true); }
+
 void Led::SetColor(uint8_t red, uint8_t green, uint8_t blue)
 {
 	if (red == red_ && green == green_ && blue == blue_)
@@ -37,7 +39,7 @@ void Led::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(bri
 void Led::Init()
 {
 	FastLED.addLeds<kLedType,kDataPin,kClockPin,kColorOrder>(leds_, num_leds_).setCorrection(TypicalLEDStrip);
-	SetColor(0,0,255);
+        Clear();
 }
 
 void Led::Show() { FastLED.show(); }

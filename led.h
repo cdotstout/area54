@@ -11,6 +11,8 @@ public:
     ~Led();
 
     void Init();
+
+    void Clear();
     void SetColor(uint8_t red, uint8_t green, uint8_t blue);
     void SetBrightness(uint8_t brightness);
     void Show();

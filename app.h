@@ -1,17 +1,24 @@
 #pragma once
 
 #include "led.h"
+#include "network.h"
 #include "program.h"
+#include "transport.h"
+#include <memory>
 
 class App {
 public:
   App();
 
-  void Init();
+  bool Init();
 
   void Update(uint32_t time_ms);
 
 private:
-  Led led_;
-  std::unique_ptr<Program> program_;
+    void Callback(char* topic, uint8_t* payload, unsigned int length);
+
+    Led led_;
+    std::unique_ptr<Program> program_;
+    std::unique_ptr<Network> network_;
+    std::unique_ptr<Transport> transport_;
 };

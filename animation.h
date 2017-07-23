@@ -1,5 +1,7 @@
 #pragma once
 
+#include "log.h"
+#include <cstdint>
 #include <vector>
 
 class Animation {
@@ -24,32 +26,39 @@ private:
 
 class AnimationSequence {
 public:
-	void Add(Animation animation) 
-	{		
-		sequence_.push_back(animation); 
-		duration_ += animation.duration();
-		iter_ = sequence_.begin();
-	}
+    AnimationSequence(bool loop = false) : loop_(loop) {}
 
-	// time must be nondecreasing
-	uint32_t get(uint32_t time) 
-	{
-		uint32_t time_delta = time - time_base_;
-		uint32_t value = iter_->get(time_delta);
-		if (time_delta >= iter_->duration()) {
-			time_base_ += iter_->duration();
-			iter_++;
-			if (iter_ == sequence_.end())
-				iter_ = sequence_.begin();
-		}
-		return value;
-	}
+    void Add(Animation animation)
+    {
+        sequence_.push_back(animation);
+        duration_ += animation.duration();
+        iter_ = sequence_.begin();
+    }
+
+    // time must be nondecreasing
+    uint32_t get(uint32_t time)
+    {
+        uint32_t time_delta = time - time_base_;
+        uint32_t value = iter_->get(time_delta);
+
+        if (time_delta >= iter_->duration()) {
+            auto next = iter_ + 1;
+            if (next == sequence_.end() && loop_)
+                next = sequence_.begin();
+            if (next != sequence_.end()) {
+                time_base_ += iter_->duration();
+                iter_ = next;
+            }
+        }
+        return value;
+        }
 
 	uint32_t duration() { return duration_; }
 
 private:
-	std::vector<Animation> sequence_;
-	std::vector<Animation>::iterator iter_;
-	uint32_t duration_ = 0;
-	uint32_t time_base_ = 0;
+    bool loop_;
+    std::vector<Animation> sequence_;
+    std::vector<Animation>::iterator iter_;
+    uint32_t duration_ = 0;
+    uint32_t time_base_ = 0;
 };

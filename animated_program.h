@@ -27,11 +27,11 @@ public:
 
 	void GetBrightness(uint32_t time_ms, uint8_t* brightness_out) override
 	{
-		*brightness_out = brightness_sequence_->get(time_ms);
-	}
+            *brightness_out = brightness_sequence_->get(time_ms - time_base());
+        }
 
-private:
-	uint8_t red_ = 0;
+    private:
+        uint8_t red_ = 0;
 	uint8_t green_ = 0;
 	uint8_t blue_ = 0;
 

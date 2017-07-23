@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include "animation.h"
+#include <cstdint>
 
 struct CRGB;
 

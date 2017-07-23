@@ -8,11 +8,11 @@
 
 class App {
 public:
-  App();
+    App();
 
-  bool Init();
+    bool Init();
 
-  void Update(uint32_t time_ms);
+    void Update(uint32_t time_ms);
 
 private:
     void Callback(char* topic, uint8_t* payload, unsigned int length);

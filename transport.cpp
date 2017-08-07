@@ -6,8 +6,8 @@
 
 class MqttTransport : public Transport {
 public:
-    static constexpr char* kServer = "192.168.44.102";
-    // static constexpr char* kServer = "pihole.deserts";
+    //static constexpr char* kServer = "192.168.44.102";
+    static constexpr char* kServer = "192.168.0.10";
     static constexpr uint32_t kPort = 1883;
 
     MqttTransport(std::function<void(char*, uint8_t*, unsigned int)> callback)

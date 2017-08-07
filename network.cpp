@@ -7,8 +7,10 @@ class WifiNetwork : public Network {
 public:
     // const char* kSsid = "Jersey";
     // const char* kPassword = "Johnny5isal!v3";
-    static constexpr char* kSsid = "Mojave";
-    static constexpr char* kPassword = "2856d18b84c94ab1b1e3";
+    // static constexpr char* kSsid = "Mojave";
+    // static constexpr char* kPassword = "2856d18b84c94ab1b1e3";
+    static constexpr char* kSsid = "simon";
+    static constexpr char* kPassword = "28313724";
 
     void Connect() override;
     void GetMacAddress(uint8_t mac[6]) override;

@@ -5,7 +5,7 @@
 #include "transport.h"
 #include <cstdint>
 
-constexpr uint32_t kNumLeds = 160;
+constexpr uint32_t kNumLeds = 100;
 
 App::App() : led_(kNumLeds) {}
 
@@ -56,10 +56,23 @@ bool App::Init()
 
 void App::Update(uint32_t time_ms)
 {
+    if (pending_program_) {
+        program_ = std::move(pending_program_);
+        program_->Start();
+    }
+
     if (program_) {
         uint8_t red, green, blue;
         program_->GetColor(time_ms, &red, &green, &blue);
-        led_.SetColor(red, green, blue);
+
+        led_.FillColor(0, 0, 0);
+
+        uint32_t segment_index = 0;
+        uint32_t first_index, last_index;
+        while (program_->GetSegment(time_ms, segment_index, &first_index, &last_index)) {
+            led_.SetSegment(first_index, last_index, red, green, blue);
+            segment_index++;
+        }
 
         uint8_t brightness;
         program_->GetBrightness(time_ms, &brightness);
@@ -74,9 +87,5 @@ void App::Update(uint32_t time_ms)
 void App::Callback(char* topic, uint8_t* payload, unsigned int length)
 {
     LOG("Callback topic %s length %u", topic, length);
-    std::unique_ptr<Program> program = Parser::ParseProgram(reinterpret_cast<char*>(payload));
-    if (program) {
-        LOG("Updating program");
-        program_ = std::move(program);
-    }
+    pending_program_ = Parser::ParseProgram(reinterpret_cast<char*>(payload));
 }

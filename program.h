@@ -1,6 +1,7 @@
 #pragma once
 
 #include "animation.h"
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -8,12 +9,24 @@ extern "C" unsigned long millis();
 
 class Program {
 public:
+    static constexpr uint32_t kMaxIndex = UINT32_MAX;
+
     Program() { Start(); }
 
     virtual ~Program() {}
     virtual void GetColor(uint32_t time_ms, uint8_t* red_out, uint8_t* green_out,
                           uint8_t* blue_out) = 0;
     virtual void GetBrightness(uint32_t time_ms, uint8_t* brightness_out) = 0;
+
+    virtual bool GetSegment(uint32_t time_ms, uint32_t segment_index, uint32_t* start_index,
+                            uint32_t* end_index)
+    {
+        if (segment_index > 0)
+            return false;
+        *start_index = 0;
+        *end_index = UINT32_MAX;
+        return true;
+    }
 
     void Start()
     {

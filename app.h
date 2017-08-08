@@ -19,6 +19,7 @@ private:
 
     Led led_;
     std::unique_ptr<Program> program_;
+    std::unique_ptr<Program> pending_program_;
     std::unique_ptr<Network> network_;
     std::unique_ptr<Transport> transport_;
 };

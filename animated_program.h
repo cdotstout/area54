@@ -28,7 +28,32 @@ public:
 
     void GetBrightness(uint32_t time_ms, uint8_t* brightness_out) override
     {
+        if (!brightness_sequence_) {
+            *brightness_out = 255;
+            return;
+        }
         *brightness_out = brightness_sequence_->get(time_ms - time_base());
+    }
+
+    struct Segment {
+        Animation animation[2];
+    };
+
+    void SetSegments(std::vector<Segment> segments) { segments_ = std::move(segments); }
+
+    bool GetSegment(uint32_t time_ms, uint32_t segment_index, uint32_t* start_index,
+                    uint32_t* end_index) override
+    {
+        if (segment_index >= segments_.size())
+            return false;
+        *start_index = segments_[segment_index].animation[0].get(time_ms - time_base());
+        *end_index = segments_[segment_index].animation[1].get(time_ms - time_base());
+        if (*start_index > *end_index) {
+            uint32_t tmp = *start_index;
+            *start_index = *end_index;
+            *end_index = tmp;
+        }
+        return true;
     }
 
 private:
@@ -37,4 +62,5 @@ private:
     uint8_t blue_ = 0;
 
     std::unique_ptr<AnimationSequence> brightness_sequence_;
+    std::vector<Segment> segments_;
 };

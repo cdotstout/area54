@@ -13,7 +13,9 @@ public:
     void Init();
 
     void Clear();
-    void SetColor(uint8_t red, uint8_t green, uint8_t blue);
+    void FillColor(uint8_t red, uint8_t green, uint8_t blue);
+    void SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uint8_t green,
+                    uint8_t blue);
     void SetBrightness(uint8_t brightness);
     void Show();
 

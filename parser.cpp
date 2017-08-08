@@ -34,9 +34,53 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
         uint8_t blue = json_object["blue"];
         LOG("got AnimatedProgram color %u:%u:%u", red, green, blue);
 
-        auto sequence = std::unique_ptr<AnimationSequence>(new AnimationSequence());
+        program->SetColor(red, green, blue);
+
+        if (json_object.containsKey("segments")) {
+            auto segments = std::vector<AnimatedProgram::Segment>();
+
+            JsonArray& array = json_object["segments"];
+
+            AnimatedProgram::Segment segment;
+
+            for (uint32_t i = 0; i < array.size(); i++) {
+                JsonObject& json_segment = array[i];
+
+                uint32_t start = 0;
+                uint32_t end = 0;
+                uint32_t duration = 3000;
+
+                if (json_segment.containsKey("0")) {
+                    JsonObject& object = json_segment["0"];
+                    start = object["start"];
+                    LOG("got first %u", start);
+                    end = object["end"];
+                    LOG("got end %u", end);
+                    duration = object["duration"];
+                    LOG("got duration %u", duration);
+                    segment.animation[0] = Animation{start, end, duration};
+                }
+
+                if (json_segment.containsKey("1")) {
+                    JsonObject& object = json_segment["1"];
+                    start = object["start"];
+                    LOG("got first %u", start);
+                    end = object["end"];
+                    LOG("got end %u", end);
+                    duration = object["duration"];
+                    LOG("got duration %u", duration);
+                    segment.animation[1] = Animation{start, end, duration};
+                }
+
+                segments.push_back(segment);
+            }
+
+            program->SetSegments(std::move(segments));
+        }
 
         if (json_object.containsKey("brightness")) {
+            auto sequence = std::unique_ptr<AnimationSequence>(new AnimationSequence());
+
             JsonArray& brightness_array = json_object["brightness"];
 
             for (uint32_t i = 0; i < brightness_array.size(); i++) {
@@ -62,10 +106,9 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
 
                 sequence->Add(Animation{start, end, duration});
             }
-        }
 
-        program->SetColor(red, green, blue);
-        program->SetBrightness(std::move(sequence));
+            program->SetBrightness(std::move(sequence));
+        }
 
         return std::move(program);
     }

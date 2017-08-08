@@ -6,7 +6,8 @@ constexpr uint32_t kMsPerFrame = 1000 / kFramesPerSecond;
 
 std::unique_ptr<App> g_app;
 
-void setup() {
+void setup()
+{
     Serial.begin(115200);
 
     LOG("setup begin");
@@ -21,7 +22,8 @@ void setup() {
     LOG("app init success");
 }
 
-void loop() {
+void loop()
+{
     auto time_ms = millis();
 
     if (g_app)

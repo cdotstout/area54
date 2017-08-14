@@ -74,8 +74,8 @@ class BpmSequencer(Sequencer):
     def __init__(self, playlist, bpm=120):
         super().__init__()
         self.redis_connection = redis.StrictRedis()
-        self.playlist = playlist
         self.bpm = bpm
+        self.playlist = playlist
         self.timer_thread = None
         self.reset_timer()
         self._continue_timer = True

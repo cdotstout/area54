@@ -2,7 +2,6 @@ import signal
 import sys
 import termios
 import tty
-from contextlib import contextmanager
 
 
 class Timeout(Exception):
@@ -11,6 +10,7 @@ class Timeout(Exception):
 
 def timeout(sig, frame):
     signal.alarm(0)
+    print('Timed out: no user input')
     raise Timeout('No user input')
 
 
@@ -27,19 +27,8 @@ def set_default(fd, settings):
     termios.tcsetattr(fd, termios.TCSADRAIN, settings)
 
 
-def clear():
-    # CLEAR = '\033[F'
-    # CLEAR = '\033[K'
-    # sys.stdout.write(CLEAR)
-    pass
+def get_raw_input(timeout_duration=10):
+    if timeout_duration is not None:
+        signal.alarm(timeout_duration)
+    return sys.stdin.read(1)
 
-
-@contextmanager
-def get_raw_input(use_timeout=True):
-    fd = sys.stdin.fileno()
-    default_settings = get_settings(fd)
-    if use_timeout:
-        signal.alarm(5)
-    set_raw(fd)
-    yield sys.stdin.read(1)
-    set_default(fd, default_settings)

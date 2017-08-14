@@ -39,7 +39,6 @@ class GameSequencer(Sequencer):
         for step in pattern:
             self.play_step(step, play_audio=False)
             sleep(duration_between)
-        term.clear()
 
     def play_step(self, step, animation='simon', play_audio=True):
         """Play the LED animation and audio, and display the step."""
@@ -50,7 +49,6 @@ class GameSequencer(Sequencer):
 
     def print_to_term(self, step):
         """Write the step to the window."""
-        term.clear()
         print(self.format_step(step))
 
     def format_step(self, step):
@@ -59,7 +57,6 @@ class GameSequencer(Sequencer):
 
     def game_over(self):
         """Send game over animation to beacons and window."""
-        term.clear()
         print('GAME OVER')
         # TODO this should send 1 msg to a broadcast topic
         for address in self.ADDRESSES.values():
@@ -105,6 +102,7 @@ class BpmSequencer(Sequencer):
         beat_generator = self.generate_beats()
         while self._continue_timer:
             try:
+                print('Sequencer beat...')
                 next(beat_generator)
             except StopIteration:
                 beat_generator = self.generate_beats()
@@ -113,13 +111,16 @@ class BpmSequencer(Sequencer):
 
     def start(self):
         """Start the timer thread."""
+        print('Starting sequencer...')
         self.timer_thread.start()
 
     def stop(self):
         """Stop and reset the timer thread."""
+        print('Stopping sequencer...')
         self._continue_timer = False
         self.timer_thread.join(timeout=1.0)
         self.reset_timer()
+        print('Stopped sequencer')
 
     def reset_timer(self):
         self.timer_thread = Thread(target=self._start_timer, name='timer')

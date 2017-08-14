@@ -22,6 +22,13 @@ class Sequencer:
 
     def play_step(self, step, animation='fuchsia', audio_category='owens'):
         """Play the LED animation and audio, and display the step."""
+        self.send_animation(step, animation)
+        if self.audio_sequencer:
+            self.audio_sequencer.play_audio(step)
+        self.write_to_window(step)
+
+    def play_step(self, step, animation='fuchsia', audio_category='owens'):
+        """Play the LED animation and audio, and display the step."""
         self.mqtt_client.send_animation(step, animation)
         if self.audio_sequencer:
             self.audio_sequencer.play_audio(step)

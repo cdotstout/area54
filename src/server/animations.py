@@ -1,4 +1,17 @@
 ANIMATIONS = {
+    'blackout': {
+        "name": "AnimatedProgram",
+        "segments": [
+            {
+                "duration": "10",
+                "0": {"s": "0", "e": "0"},
+                "1": {"s": "53", "e": "53"}
+            }
+        ],
+        "brightness": [
+            {"s": "0", "e": "0", "d": "10"}
+        ]
+    },
     'cool': {
         "name": "AnimatedProgram",
         "segments": [
@@ -121,6 +134,7 @@ ANIMATIONS = {
                 "1": {"s": "36", "e": "53"},
                 "hue_anim": {"s": "0", "e": "100"}
             }
+        ]
     },
     'simon': {
         "name": "AnimatedProgram",

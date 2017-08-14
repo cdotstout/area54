@@ -5,7 +5,7 @@
 #include "transport.h"
 #include <cstdint>
 
-constexpr uint32_t kNumLeds = 100;
+constexpr uint32_t kNumLeds = 54;
 
 App::App() : led_(kNumLeds) {}
 

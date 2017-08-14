@@ -10,12 +10,12 @@
 // Create Bounce objects for each button.  The Bounce object
 // automatically deals with contact chatter or "bounce", and
 // it makes detecting changes very simple.
-Bounce button0 = Bounce(0, 10);
-Bounce button1 = Bounce(1, 10);  // 10 = 10 ms debounce time
-Bounce button2 = Bounce(2, 10);  // which is appropriate for
-Bounce button3 = Bounce(3, 10);  // most mechanical pushbuttons
-Bounce button4 = Bounce(4, 10);
-Bounce button5 = Bounce(5, 10);  // if a button is too "sensitive"
+Bounce button0 = Bounce(0, 100);
+Bounce button1 = Bounce(1, 100);  // 10 = 10 ms debounce time
+Bounce button2 = Bounce(2, 100);  // which is appropriate for
+Bounce button3 = Bounce(3, 100);  // most mechanical pushbuttons
+Bounce button4 = Bounce(4, 100);
+Bounce button5 = Bounce(5, 100);  // if a button is too "sensitive"
 
 void setup() {
   // Configure the pins for input mode with pullup resistors.

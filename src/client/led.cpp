@@ -10,8 +10,6 @@
 #endif
 
 constexpr ESPIChipsets kLedType = LPD8806;
-constexpr uint8_t kDataPin = 1;
-constexpr uint8_t kClockPin = 2;
 constexpr EOrder kColorOrder = GRB;
 
 Led::Led(uint32_t num_leds) : num_leds_(num_leds) { leds_ = new CRGB[num_leds_]; }
@@ -48,7 +46,11 @@ void Led::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(bri
 
 void Led::Init()
 {
-    FastLED.addLeds<kLedType, kDataPin, kClockPin, kColorOrder>(leds_, num_leds_)
+    FastLED.addLeds<kLedType, 1, 2, kColorOrder>(leds_, num_leds_)
+        .setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<kLedType, 3, 4, kColorOrder>(leds_, num_leds_)
+        .setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<kLedType, 5, 6, kColorOrder>(leds_, num_leds_)
         .setCorrection(TypicalLEDStrip);
     Clear();
 }

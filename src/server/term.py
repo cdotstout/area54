@@ -35,10 +35,10 @@ def clear():
 
 
 @contextmanager
-def get_raw_input(timeout=True):
+def get_raw_input(use_timeout=True):
     fd = sys.stdin.fileno()
     default_settings = get_settings(fd)
-    if timeout:
+    if use_timeout:
         signal.alarm(5)
     set_raw(fd)
     yield sys.stdin.read(1)

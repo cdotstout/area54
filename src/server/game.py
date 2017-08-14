@@ -9,18 +9,18 @@ DELAY_INTERVAL = 1000
 
 class Simon:
 
-    def __init__(self, window):
+    def __init__(self, window, audio=True):
         self.window = window
-        self.sequencer = Sequencer(window)
+        self.sequencer = Sequencer(window, audio)
         self.pattern = []
         self.add_step()
 
     @classmethod
-    def play_simon(cls, window):
+    def play_simon(cls, window, audio=True):
         """Create a Simon instance then play forever."""
-        simon = cls(window)
+        simon = cls(window, audio)
         # set a 20 second timeout
-        curses.halfdelay(200)
+        #curses.halfdelay(200)
         while True:
             simon.play_level()
 
@@ -32,6 +32,8 @@ class Simon:
                 self.game_over()
                 self.reset()
                 return
+            else:
+                self.sequencer.play_step(step)
         self.reward()
         self.add_step()
         self.window.clear()
@@ -45,14 +47,12 @@ class Simon:
         """Get a keypress event and check that it's valid."""
         step = self.window.getkey()
         if step in self.sequencer.ADDRESSES.keys():
-            self.sequencer.send_animation(step)
-            self.sequencer.write_to_window(step)
             return step
 
     def reward(self):
         """Play a reward animation then briefly wait."""
         # TODO add reward animation
-        curses.napms(500)
+        curses.napms(1000)
 
     def reset(self):
         """Reset the pattern."""
@@ -61,12 +61,9 @@ class Simon:
 
     def game_over(self):
         """Display game over animation then wait for a button press."""
-        self.sequencer.display_game_over()
+        self.sequencer.game_over()
         # press any key to continue
         self.window.getkey()
-
-
-    
 
 if __name__ == '__main__':
     curses.wrapper(Simon.play_simon)

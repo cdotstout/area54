@@ -44,8 +44,10 @@ class AudioPlayer:
 
     def play_audio(self, step):
         """Play the step's audio track for the current category."""
-        self.players[step].stop()
-        self.players[step].play()
+        # TODO check if player has track for step
+        if self.players[step]:
+            self.players[step].stop()
+            self.players[step].play()
 
     def play_game_over(self):
         """Play the game over track for the current category."""

@@ -1,9 +1,13 @@
 import random
 import signal
+import sys
+from functools import partial
 from time import sleep
 
 import term
-from sequencer import BpmSequencer, GameSequencer, get_test_sequencer
+from sequencer import GameSequencer, cool
+
+from mqtt import ALL_BEACONS
 
 random = random.SystemRandom()
 DELAY_INTERVAL = 1000
@@ -21,31 +25,40 @@ class Simon:
         """Create a Simon instance then play forever."""
         simon = cls(audio)
         # set a 20 second timeout
+        print('Playing simon...')
+        print('Blacking out...')
+        for beacon in ALL_BEACONS:
+            simon.sequencer.mqtt_client.send_animation(beacon, 'blackout')
+            sleep(0.5)
         while True:
             simon.play_level()
 
     def play_level(self):
         """Play a level using the current pattern."""
+        print('Displaying pattern...')
         self.sequencer.display_pattern(self.pattern)
         for step in self.pattern:
+            print('Waiting for user input...')
             if step != self.get_user_input():
+                print('Wrong input!')
                 self.game_over()
                 self.reset()
                 return
             else:
+                print('Correct input!')
                 self.sequencer.play_step(step)
         self.reward()
         self.add_step()
-        term.clear()
 
     def add_step(self):
         """Add a step to the pattern."""
         step = random.choice(list(self.sequencer.ADDRESSES))
         self.pattern.append(step)
 
-    def get_user_input(self, timeout=True):
+    def get_user_input(self, timeout_duration=10):
         """Get a keypress event and check that it's valid."""
-        with term.get_raw_input(timeout) as step:
+        while True:
+            step = term.get_raw_input(timeout_duration)
             if step in self.sequencer.ADDRESSES.keys():
                 return step
 
@@ -63,13 +76,24 @@ class Simon:
         """Display game over animation then wait for a button press."""
         self.sequencer.game_over()
         # press any key to continue
-        self.get_user_input()
+        # self.get_user_input()
+        sleep(1.0)
 
 
 def main():
     # Handle alarm signal for user input timeout
     signal.signal(signal.SIGALRM, term.timeout)
-    bpm_sequencer = get_test_sequencer()
+    # Set terminal to raw mode and fix terminal on sigterm
+    fd = sys.stdin.fileno()
+    default_settings = term.get_settings(fd)
+    term.set_raw(fd)
+
+    def reset_term(sig, frame):
+        return partial(term.set_default, default_settings)
+
+    signal.signal(signal.SIGTERM, reset_term)
+
+    bpm_sequencer = cool()
 
     # Play Simon until there's a user input timeout, then switch to bpm mode.
     # Switch back to Simon on user input.
@@ -78,8 +102,7 @@ def main():
             Simon.play_simon()
         except term.Timeout:
             bpm_sequencer.start()
-            with term.get_raw_input(timeout=False) as _:
-                pass
+            term.get_raw_input(timeout_duration=None)
             bpm_sequencer.stop()
 
 

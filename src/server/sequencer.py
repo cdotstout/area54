@@ -175,47 +175,93 @@ def test2():
     return BpmSequencer(playlist, 118)
 
 
-def test3():
-    test_cue1 = Cue((BEACON1, ), 'new')
-    test_cue2 = Cue((BEACON2, ), 'new')
-    test_cue3 = Cue((BEACON3, ), 'new')
-    test_cue4 = Cue((BEACON4, ), 'new')
-    test_cue5 = Cue((BEACON5, ), 'new')
-    test_cue6 = Cue((BEACON6, ), 'new')
-    test_beat1 = Beat([test_cue1, test_cue2, test_cue3, test_cue4, test_cue5, test_cue6])
-    # test_beat2 = Beat([test_cue2, ])
-    # test_beat3 = Beat([test_cue3, ])
-    # test_beat4 = Beat([test_cue4, ])
-    # test_beat5 = Beat([test_cue5, ])
-    # test_beat6 = Beat([test_cue6, ])
-    test_seq1 = BeatSequence((test_beat1, ))
-    # cue1 = Cue((BEACON1, BEACON3, BEACON5), 'redfast')
-    # cue2 = Cue((BEACON4, BEACON6), 'redfast')
-    # cue3 = Cue((BEACON1, BEACON3, BEACON4, BEACON5, BEACON6, ), 'game_over')
-    # beat1 = Beat([cue1, ])
-    # beat2 = Beat([cue2, ])
-    # beat3 = Beat([cue3, ])
-    # seq2 = BeatSequence((beat1,
-    #                      beat2,
-    #                      beat1,
-    #                      beat2,
-    #                      beat1, ))
-    # seq3 = BeatSequence((beat3,
-    #                      None,
-    #                      beat3,
-    #                      None,
-    #                      beat3, ))
-    # seq4 = BeatSequence((beat3, ))
-    # noneseq = BeatSequence((None,
-    #                        None,
-    #                        None,
-    #                        None,
-    #                        None, ))
-    playlist = PlayList(((test_seq1, 1), ))
+def swirl():
+    test_cue1 = Cue((BEACON1, ), 'swirl_pulse')
+    test_cue2 = Cue((BEACON2, ), 'swirl_pulse')
+    test_cue3 = Cue((BEACON3, ), 'swirl_pulse')
+    test_cue4 = Cue((BEACON4, ), 'swirl_pulse')
+    test_cue5 = Cue((BEACON5, ), 'swirl_pulse')
+    test_cue6 = Cue((BEACON6, ), 'swirl_pulse')
+    test_beat1 = Beat([test_cue1, ])
+    test_beat2 = Beat([test_cue2, ])
+    test_beat3 = Beat([test_cue3, ])
+    test_beat4 = Beat([test_cue4, ])
+    test_beat5 = Beat([test_cue5, ])
+    test_beat6 = Beat([test_cue6, ])
+    test_seq1 = BeatSequence((test_beat1,
+                              test_beat2,
+                              test_beat3,
+                              test_beat4,
+                              test_beat5,
+                              test_beat6, ))
+    test_seq1_rev = BeatSequence((test_beat6,
+                                  test_beat5,
+                                  test_beat4,
+                                  test_beat3,
+                                  test_beat2,
+                                  test_beat1, ))
+    none_seq = BeatSequence((None, None, None, None, ))
+    steady_cue = Cue(ALL_BEACONS, 'swirl_steady')
+    steady_beat = Beat((steady_cue, ))
+    steady_seq = BeatSequence((steady_beat, ))
+    slow_cue = Cue(ALL_BEACONS, 'swirl_pulse_slow')
+    slow_beat = Beat((slow_cue, ))
+    slow_seq = BeatSequence((slow_beat, ))
+    playlist = PlayList(((test_seq1, 7),
+                         (steady_seq, 1),
+                         (slow_seq, 1),
+                         (none_seq, 3),
+                         (slow_seq, 1),
+                         (none_seq, 3),
+                         (test_seq1_rev, 7),
+                         (steady_seq, 1),
+                         (slow_seq, 1),
+                         (none_seq, 3),
+                         (slow_seq, 1),
+                         (none_seq, 3)))
+    return BpmSequencer(playlist, 360)
+
+
+def cool():
+    cool_cue = Cue((BEACON1,
+                    BEACON2,
+                    BEACON3,
+                    BEACON4,
+                    BEACON5,
+                    BEACON6), 'cool')
+    cool_beat = Beat((cool_cue, ))
+    cool_seq = BeatSequence((cool_beat, None, None, None, None, None, None, None, ))
+    playlist = PlayList(((cool_seq, 1), ))
+
+    return BpmSequencer(playlist, 120)
+
+
+def bounce():
+    bounce_cue = Cue(ALL_BEACONS, 'bounce')
+    bounce_beat = Beat((bounce_cue, ))
+    bounce_seq = BeatSequence((bounce_beat, None, None, ))
+    playlist = PlayList(((bounce_seq, 1), ))
+    return BpmSequencer(playlist, 120)
+
+
+def test_simon():
+    simon_cue = Cue((BEACON1,
+                    BEACON2,
+                    BEACON3,
+                    BEACON4,
+                    BEACON5,
+                    BEACON6), 'simon')
+    simon_beat = Beat((simon_cue, ))
+    simon_seq = BeatSequence((simon_beat, None, simon_beat, None))
+    playlist = PlayList(((simon_seq, 1), ))
 
     return BpmSequencer(playlist, 120)
 
 
 if __name__ == '__main__':
-    seq = test3()
+    # seq = test_simon()
+    seq = cool()
+    # seq = swirl()
+    # seq = bounce()
     seq.start()
+#

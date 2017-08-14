@@ -1,0 +1,20 @@
+{
+	"name": "AnimatedProgram",
+	"red": "255",
+	"green": "0",
+	"blue": "0",
+	"segments": [
+		{ 
+			"0": { "start": "0", "end": "0", "duration": "300" },
+			"1": { "start": "0", "end": "27", "duration": "300" }
+		},
+		{
+			"0": { "start": "54", "end": "54", "duration": "300" },
+			"1": { "start": "54", "end": "27", "duration": "300" }
+		}
+	],
+	"brightness": [
+		{ "start": "0", "end": "255", "duration": "500" },
+		{ "start": "255", "end": "255", "duration": "3000" }
+	]
+}

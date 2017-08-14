@@ -38,14 +38,14 @@ class GameSequencer(Sequencer):
     def display_pattern(self, pattern, duration_between=0.5):
         """Display the pattern with the beacons and in the window."""
         for step in pattern:
-            self.play_step(step)
+            self.play_step(step, play_audio=False)
             sleep(duration_between)
         term.clear()
 
-    def play_step(self, step, animation='fuchsia'):
+    def play_step(self, step, animation='simon', play_audio=True):
         """Play the LED animation and audio, and display the step."""
         self.send_animation(self.ADDRESSES[step], animation)
-        if self.audio_player:
+        if self.audio_player and play_audio:
             self.audio_player.play_audio(step)
         self.print_to_term(step)
 

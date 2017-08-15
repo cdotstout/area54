@@ -1,11 +1,8 @@
 import random
-import signal
-import sys
-from functools import partial
 from time import sleep
 
 import term
-from sequencer import GameSequencer, cool
+from sequencer import BpmSequencer, GameSequencer, PLAYLISTS
 
 from mqtt import ALL_BEACONS
 
@@ -81,19 +78,10 @@ class Simon:
 
 
 def main():
-    # Handle alarm signal for user input timeout
-    signal.signal(signal.SIGALRM, term.timeout)
-    # Set terminal to raw mode and fix terminal on sigterm
-    fd = sys.stdin.fileno()
-    default_settings = term.get_settings(fd)
-    term.set_raw(fd)
+    # Set the terminal to raw mode and set signal handlers
+    term.setup()
 
-    def reset_term(sig, frame):
-        return partial(term.set_default, default_settings)
-
-    signal.signal(signal.SIGTERM, reset_term)
-
-    bpm_sequencer = cool()
+    bpm_sequencer = BpmSequencer(PLAYLISTS)
 
     # Play Simon until there's a user input timeout, then switch to bpm mode.
     # Switch back to Simon on user input.

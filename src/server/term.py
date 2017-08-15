@@ -8,6 +8,22 @@ class Timeout(Exception):
     pass
 
 
+def setup():
+    # Handle alarm signal for user input timeout
+    signal.signal(signal.SIGALRM, timeout)
+
+    # Set terminal to raw mode and fix terminal on sigterm
+    fd = sys.stdin.fileno()
+    default_settings = get_settings(fd)
+    set_raw(fd)
+
+    def reset_term(sig, frame):
+        set_default(fd, default_settings)
+        sys.exit()
+
+    signal.signal(signal.SIGTERM, reset_term)
+
+
 def timeout(sig, frame):
     signal.alarm(0)
     print('Timed out: no user input')

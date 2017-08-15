@@ -1,9 +1,7 @@
+from random import randrange, shuffle
 from threading import Thread
 from time import sleep
 
-import redis
-
-import term
 from audio_player import AudioPlayer
 from mqtt import *
 
@@ -67,43 +65,38 @@ class GameSequencer(Sequencer):
 
 class BpmSequencer(Sequencer):
 
-    def __init__(self, playlist, bpm=120):
+    def __init__(self, playlists):
         super().__init__()
-        self.redis_connection = redis.StrictRedis()
-        self.bpm = bpm
-        self.playlist = playlist
+        self.bpm = None
+        self.playlists = playlists
         self.timer_thread = None
         self.reset_timer()
         self._continue_timer = True
 
-    @property
-    def bpm(self):
-        current_bpm = int(self.redis_connection.get('bpm'))
-        if current_bpm is None:
-            current_bpm = 120
-        return current_bpm
-
-    @bpm.setter
-    def bpm(self, bpm):
-        self.redis_connection.set('bpm', int(bpm))
-
     def generate_beats(self):
-        for current_sequence, num_cycles in self.playlist:
-            for _ in range(num_cycles):
-                for beat in current_sequence:
+        """Send a beat animation from playlists."""
+        shuffled_playlists = list(self.playlists)
+        shuffle(shuffled_playlists)
+        for playlist in shuffled_playlists:
+            self.bpm = playlist.bpm
+            for _ in range(randrange(2, 9, 2)):
+                beats = playlist.generate_beats()
+                for beat in beats:
                     if beat:
-                        for cue in beat:
-                            for address in cue.addresses:
-                                self.send_animation(address, cue.animation)
+                        for msg in beat.get_messages():
+                            self.send_animation(*msg)
                     yield
 
+            print('Switching playlists...')
+
     def _start_timer(self):
-        """Play beats from the sequence at the bpm rate."""
+        """Play beats from the sequence at the bpm rate forever."""
         beat_generator = self.generate_beats()
         while self._continue_timer:
             try:
                 print('Sequencer beat...')
                 next(beat_generator)
+            # Repeat forever
             except StopIteration:
                 beat_generator = self.generate_beats()
                 next(beat_generator)
@@ -127,8 +120,20 @@ class BpmSequencer(Sequencer):
         self._continue_timer = True
 
 
-class PlayList(tuple):
-    pass
+class PlayList:
+
+    def __init__(self, beat_sequences, bpm):
+        self.beat_sequences = beat_sequences
+        self.bpm = bpm
+
+    def __iter__(self):
+        yield from self.beat_sequences
+
+    def generate_beats(self):
+        for current_sequence, num_cycles in self:
+            for _ in range(num_cycles):
+                for beat in current_sequence:
+                    yield beat
 
 
 class BeatSequence(tuple):
@@ -136,7 +141,11 @@ class BeatSequence(tuple):
 
 
 class Beat(tuple):
-    pass
+
+    def get_messages(self):
+        for cue in self:
+            for address in cue.addresses:
+                yield (address, cue.animation)
 
 
 class Cue:
@@ -144,35 +153,6 @@ class Cue:
     def __init__(self, addresses, animation):
         self.addresses = addresses
         self.animation = animation
-
-
-def get_test_sequencer():
-    even_fuchsia = Cue((BEACON2, BEACON4, BEACON6,), 'fuchsia')
-    odd_red = Cue((BEACON1, BEACON3, BEACON5,), 'game_over')
-    both_beat = Beat([even_fuchsia, odd_red, ])
-    just_fuchsia_beat = Beat([even_fuchsia, ])
-    both_seq = BeatSequence((both_beat, just_fuchsia_beat,))
-    just_fuchsia_seq = BeatSequence((just_fuchsia_beat,))
-    playlist = PlayList({both_seq: 3, just_fuchsia_seq: 1, })
-    return BpmSequencer(playlist)
-
-
-def test1():
-    test_cue = Cue((BEACON1,), 'fuchsia')
-    test_beat = Beat([test_cue, ])
-    test_seq = BeatSequence((test_beat,))
-    playlist = PlayList({test_seq: 1, })
-    return BpmSequencer(playlist, 90)
-
-
-def test2():
-    test_fuchsia = Cue((BEACON1,), 'fuchsia')
-    test_red = Cue((BEACON1,), 'red')
-    beat_fuchsia = Beat([test_fuchsia, ])
-    beat_red = Beat([test_red, ])
-    test_seq = BeatSequence((beat_fuchsia,beat_red))
-    playlist = PlayList({test_seq: 1, })
-    return BpmSequencer(playlist, 118)
 
 
 def swirl():
@@ -207,19 +187,18 @@ def swirl():
     slow_cue = Cue(ALL_BEACONS, 'swirl_pulse_slow')
     slow_beat = Beat((slow_cue, ))
     slow_seq = BeatSequence((slow_beat, ))
-    playlist = PlayList(((test_seq1, 7),
-                         (steady_seq, 1),
-                         (slow_seq, 1),
-                         (none_seq, 3),
-                         (slow_seq, 1),
-                         (none_seq, 3),
-                         (test_seq1_rev, 7),
-                         (steady_seq, 1),
-                         (slow_seq, 1),
-                         (none_seq, 3),
-                         (slow_seq, 1),
-                         (none_seq, 3)))
-    return BpmSequencer(playlist, 360)
+    return PlayList(((test_seq1, 7),
+                     (steady_seq, 1),
+                     (slow_seq, 1),
+                     (none_seq, 3),
+                     (slow_seq, 1),
+                     (none_seq, 3),
+                     (test_seq1_rev, 7),
+                     (steady_seq, 1),
+                     (slow_seq, 1),
+                     (none_seq, 3),
+                     (slow_seq, 1),
+                     (none_seq, 3)), bpm=360)
 
 
 def cool():
@@ -231,17 +210,14 @@ def cool():
                     BEACON6), 'cool')
     cool_beat = Beat((cool_cue, ))
     cool_seq = BeatSequence((cool_beat, None, None, None, None, None, None, None, ))
-    playlist = PlayList(((cool_seq, 1), ))
-
-    return BpmSequencer(playlist, 120)
+    return PlayList(((cool_seq, 1), ), bpm=120)
 
 
 def bounce():
     bounce_cue = Cue(ALL_BEACONS, 'bounce')
     bounce_beat = Beat((bounce_cue, ))
     bounce_seq = BeatSequence((bounce_beat, None, None, ))
-    playlist = PlayList(((bounce_seq, 1), ))
-    return BpmSequencer(playlist, 120)
+    return PlayList(((bounce_seq, 1), ), bpm=120)
 
 
 def test_simon():
@@ -253,15 +229,13 @@ def test_simon():
                     BEACON6), 'simon')
     simon_beat = Beat((simon_cue, ))
     simon_seq = BeatSequence((simon_beat, None, simon_beat, None))
-    playlist = PlayList(((simon_seq, 1), ))
+    return PlayList(((simon_seq, 1), )), 120
 
-    return BpmSequencer(playlist, 120)
+
+PLAYLISTS = (swirl(), cool(), bounce())
 
 
 if __name__ == '__main__':
-    # seq = test_simon()
-    seq = cool()
-    # seq = swirl()
-    # seq = bounce()
+    seq = BpmSequencer(PLAYLISTS)
     seq.start()
 #

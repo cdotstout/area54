@@ -1,8 +1,8 @@
-import curses
 from collections import OrderedDict
 from threading import Thread
 from time import sleep
 
+import term
 from audio_player import AudioPlayer
 from mqtt import *
 
@@ -27,32 +27,30 @@ class GameSequencer(Sequencer):
         'h': BEACON6,
     }
 
-    def __init__(self, window, audio):
+    def __init__(self, audio):
         super().__init__()
-        self.window = window
-        self.audio_sequencer = None
+        self.audio_player = None
         if audio:
-            self.audio_sequencer = AudioPlayer()
+            self.audio_player = AudioPlayer()
 
-    def display_pattern(self, pattern, duration_between=500):
+    def display_pattern(self, pattern, duration_between=0.5):
         """Display the pattern with the beacons and in the window."""
         for step in pattern:
             self.play_step(step)
-            curses.napms(duration_between)
-        self.window.clear()
+            sleep(duration_between)
+        term.clear()
 
     def play_step(self, step, animation='fuchsia'):
         """Play the LED animation and audio, and display the step."""
         self.send_animation(self.ADDRESSES[step], animation)
-        if self.audio_sequencer:
-            self.audio_sequencer.play_audio(step)
-        self.write_to_window(step)
+        if self.audio_player:
+            self.audio_player.play_audio(step)
+        self.print_to_term(step)
 
-    def write_to_window(self, step):
+    def print_to_term(self, step):
         """Write the step to the window."""
-        self.window.clear()
-        self.window.addstr(self.format_step(step), curses.A_BOLD)
-        self.window.refresh()
+        term.clear()
+        print(self.format_step(step))
 
     def format_step(self, step):
         """Pad the step for display in the window."""
@@ -60,13 +58,13 @@ class GameSequencer(Sequencer):
 
     def game_over(self):
         """Send game over animation to beacons and window."""
-        self.window.clear()
-        self.window.addstr('GAME OVER')
+        term.clear()
+        print('GAME OVER')
         # TODO this should send 1 msg to a broadcast topic
         for address in self.ADDRESSES.values():
             self.send_animation(address, 'game_over')
-        if self.audio_sequencer:
-            self.audio_sequencer.play_game_over()
+        if self.audio_player:
+            self.audio_player.play_game_over()
 
 
 class BpmSequencer(Sequencer):

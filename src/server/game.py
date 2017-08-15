@@ -1,7 +1,9 @@
 import curses
 import random
+import sys
 
-from sequencer import Sequencer
+import term
+from sequencer import BpmSequencer, GameSequencer, get_test_sequencer
 
 random = random.SystemRandom()
 DELAY_INTERVAL = 1000
@@ -11,7 +13,7 @@ class Simon:
 
     def __init__(self, window, audio=True):
         self.window = window
-        self.sequencer = Sequencer(window, audio)
+        self.sequencer = GameSequencer(window, audio)
         self.pattern = []
         self.add_step()
 
@@ -20,7 +22,7 @@ class Simon:
         """Create a Simon instance then play forever."""
         simon = cls(window, audio)
         # set a 20 second timeout
-        #curses.halfdelay(200)
+        curses.halfdelay(100)
         while True:
             simon.play_level()
 
@@ -66,4 +68,14 @@ class Simon:
         self.window.getkey()
 
 if __name__ == '__main__':
-    curses.wrapper(Simon.play_simon)
+    bpm_sequencer = get_test_sequencer()
+    fd = sys.stdin.fileno()
+    term_settings = term.get_settings(fd)
+    while True:
+        try:
+            curses.wrapper(Simon.play_simon)
+        except curses.error:
+            bpm_sequencer.start()
+            with term.get_raw_input() as stop:
+                print(stop)
+            bpm_sequencer.stop()

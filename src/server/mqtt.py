@@ -4,18 +4,17 @@ import paho.mqtt.client as mqtt_client
 
 from animations import ANIMATIONS
 
+BEACON1 = 'area54/a020a61be29a'
+BEACON2 = 'area54/a020a616c8ed'
+BEACON3 = 'area54/a020a61bdf18'
+BEACON4 = 'area54/a020a61bc23f'
+BEACON5 = 'area54/a020a61bd9cc'
+BEACON6 = 'area54/a020a61bd8aa'
+
 
 class MqttClient(mqtt_client.Client):
 
-    HOST = '192.168.44.10'
-    ADDRESSES = {
-        'a': 'area54/a020a61be29a',
-        's': 'area54/a020a616c8ed',
-        'd': 'area54/a020a61bdf18',
-        'f': 'area54/a020a61bc23f',
-        'g': 'area54/a020a61bd9cc',
-        'h': 'area54/a020a61bd8aa',
-    }
+    HOST = 'localhost'
 
     @classmethod
     def get_client(cls):
@@ -24,13 +23,9 @@ class MqttClient(mqtt_client.Client):
         client.connect(cls.HOST)
         return client
 
-    def get_address(self, step):
-        """Get the topic for the step."""
-        return self.ADDRESSES[step]
-
-    def send_animation(self, step, animation='fuchsia'):
-        """Send the animation to the beacon."""
-        self.publish(self.ADDRESSES[step], json.dumps(ANIMATIONS[animation]))
+    def send_animation(self, address, animation='fuchsia'):
+        """Send the animation to the beacon address."""
+        self.publish(address, json.dumps(ANIMATIONS[animation]))
 
 
 if __name__ == '__main__':

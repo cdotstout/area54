@@ -5,13 +5,9 @@
 #include <memory>
 #include <vector>
 
-extern "C" unsigned long millis();
-
 class Program {
 public:
     static constexpr uint32_t kMaxIndex = UINT32_MAX;
-
-    Program() { Start(); }
 
     virtual ~Program() {}
     virtual void GetColor(uint32_t time_ms, uint8_t* red_out, uint8_t* green_out,
@@ -28,9 +24,9 @@ public:
         return true;
     }
 
-    void Start()
+    void Start(uint32_t ms)
     {
-        time_base_ = millis();
+        time_base_ = ms;
         LOG("Got new timebase %u", time_base_);
     }
 

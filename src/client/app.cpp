@@ -9,12 +9,21 @@ constexpr uint32_t kNumLeds = 54;
 
 App::App() : led_(kNumLeds) {}
 
+extern "C" void delay(uint32_t ms);
+
 bool App::Init()
 {
     led_.Init();
+    led_.FillColor(255, 0, 0);
+    led_.Show();
+    delay(500);
 
     network_ = Network::Create();
     network_->Connect();
+
+    led_.FillColor(0, 255, 0);
+    led_.Show();
+    delay(500);
 
     uint8_t mac[7]{};
     network_->GetMacAddress(mac);
@@ -29,27 +38,8 @@ bool App::Init()
     });
     transport_->Connect(topic.data());
 
-    auto program = SimpleProgram::Create(255, 0, 255, 50);
-
-    // auto program = std::unique_ptr<AnimatedProgram>(new AnimatedProgram());
-    // program->SetColor(255, 0, 255);
-
-    // auto sequence = std::unique_ptr<AnimationSequence>(new
-    // AnimationSequence());
-    // constexpr uint32_t kMaxBrightness = 255;
-    // constexpr uint32_t kDurationMs = 3000;
-
-    // sequence->Add(Animation{0, 0, kDurationMs});
-    // sequence->Add(Animation{0, kMaxBrightness, kDurationMs});
-    // sequence->Add(Animation{kMaxBrightness, 0, kDurationMs});
-    // sequence->Add(Animation{0, kMaxBrightness, kDurationMs});
-    // sequence->Add(Animation{kMaxBrightness, 0, kDurationMs});
-    // sequence->Add(Animation{0, kMaxBrightness, kDurationMs});
-    // sequence->Add(Animation{kMaxBrightness, 0, kDurationMs});
-
-    // program->SetBrightness(std::move(sequence));
-
-    program_ = std::move(program);
+    led_.FillColor(0, 0, 255);
+    led_.Show();
 
     return true;
 }
@@ -58,7 +48,7 @@ void App::Update(uint32_t time_ms)
 {
     if (pending_program_) {
         program_ = std::move(pending_program_);
-        program_->Start();
+        program_->Start(time_ms);
     }
 
     if (program_) {

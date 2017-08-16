@@ -81,10 +81,11 @@ class BpmSequencer(Sequencer):
         for current_sequence, num_cycles in self.playlist.items():
             for _ in range(num_cycles):
                 for beat in current_sequence:
-                    for cue in beat:
-                        for address in cue.addresses:
-                            self.send_animation(address, cue.animation)
-                        yield
+                    if beat:
+                        for cue in beat:
+                            for address in cue.addresses:
+                                self.send_animation(address, cue.animation)
+                    yield
 
     def _start_timer(self):
         """Play beats from the sequence at the bpm rate."""
@@ -141,12 +142,14 @@ def get_test_sequencer():
     playlist = PlayList({both_seq: 3, just_fuchsia_seq: 1, })
     return BpmSequencer(playlist)
 
+
 def test1():
     test_cue = Cue((BEACON1,), 'fuchsia')
     test_beat = Beat([test_cue, ])
     test_seq = BeatSequence((test_beat,))
     playlist = PlayList({test_seq: 1, })
     return BpmSequencer(playlist, 90)
+
 
 def test2():
     test_fuchsia = Cue((BEACON1,), 'fuchsia')
@@ -158,6 +161,14 @@ def test2():
     return BpmSequencer(playlist, 118)
 
 
+def test3():
+    test_cue = Cue((BEACON1, ), 'red')
+    test_beat = Beat([test_cue, ])
+    test_seq = BeatSequence((test_beat, test_beat, None, None))
+    playlist = PlayList({test_seq: 1, })
+    return BpmSequencer(playlist, 118)
+
+
 if __name__ == '__main__':
-    seq = test2()
+    seq = test3()
     seq.start()

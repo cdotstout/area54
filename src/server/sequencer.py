@@ -141,7 +141,23 @@ def get_test_sequencer():
     playlist = PlayList({both_seq: 3, just_fuchsia_seq: 1, })
     return BpmSequencer(playlist)
 
+def test1():
+    test_cue = Cue((BEACON1,), 'fuchsia')
+    test_beat = Beat([test_cue, ])
+    test_seq = BeatSequence((test_beat,))
+    playlist = PlayList({test_seq: 1, })
+    return BpmSequencer(playlist, 90)
+
+def test2():
+    test_fuchsia = Cue((BEACON1,), 'fuchsia')
+    test_red = Cue((BEACON1,), 'red')
+    beat_fuchsia = Beat([test_fuchsia, ])
+    beat_red = Beat([test_red, ])
+    test_seq = BeatSequence((beat_fuchsia,beat_red))
+    playlist = PlayList({test_seq: 1, })
+    return BpmSequencer(playlist, 118)
+
 
 if __name__ == '__main__':
-    seq = get_test_sequencer()
+    seq = test2()
     seq.start()

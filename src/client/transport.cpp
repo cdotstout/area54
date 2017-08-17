@@ -15,7 +15,7 @@ public:
     {
     }
 
-    void Connect(const char* topic) override;
+    void Connect(std::vector<const char*> topics) override;
 
     void Loop() override
     {
@@ -32,7 +32,7 @@ private:
     std::function<void(char*, uint8_t*, unsigned int)> callback_;
 };
 
-void MqttTransport::Connect(const char* topic)
+void MqttTransport::Connect(std::vector<const char*> topics)
 {
     randomSeed(micros());
 
@@ -55,8 +55,10 @@ void MqttTransport::Connect(const char* topic)
         delay(5000);
     }
 
-    LOG("connected, subscribing to topic %s", topic);
-    client_.subscribe(topic);
+    for (const char* topic : topics) {
+        LOG("connected, subscribing to topic %s", topic);
+        client_.subscribe(topic);
+    }
 }
 
 std::unique_ptr<Transport>

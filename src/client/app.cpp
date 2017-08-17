@@ -36,7 +36,7 @@ bool App::Init()
     transport_ = Transport::Create([this](char* topic, uint8_t* payload, unsigned int length) {
         this->Callback(topic, payload, length);
     });
-    transport_->Connect(topic.data());
+    transport_->Connect({topic.data(), "area54/all"});
 
     led_.FillColor(0, 0, 255);
     led_.Show();

@@ -16,7 +16,13 @@ public:
     }
 
     void Connect(const char* topic) override;
-    void Loop() override { client_.loop(); }
+
+    void Loop() override
+    {
+        if (!client_.connected())
+            LOG("PubSubClient not connected");
+        client_.loop();
+    }
 
 private:
     void callback(char* topic, byte* payload, unsigned int length);

@@ -4,6 +4,10 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#if MQTT_MAX_PACKET_SIZE != 1024
+#error Unexpected MQTT_MAX_PACKET_SIZE - set to 1024 in PubSubClient.h
+#endif
+
 class MqttTransport : public Transport {
 public:
     //static constexpr char* kServer = "192.168.44.102";

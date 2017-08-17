@@ -29,7 +29,6 @@ void Led::FillColor(uint8_t red, uint8_t green, uint8_t blue)
 void Led::SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uint8_t green,
                      uint8_t blue)
 {
-    LOG("SetSegment %u %u", first_index, last_index);
     if (first_index < 0)
         first_index = 0;
     if (last_index >= num_leds_)

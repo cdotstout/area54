@@ -14,6 +14,8 @@ public:
                           uint8_t* blue_out) = 0;
     virtual void GetBrightness(uint32_t time_ms, uint8_t* brightness_out) = 0;
 
+    virtual uint32_t segment_count() { return 1; }
+
     virtual bool GetSegment(uint32_t time_ms, uint32_t segment_index, uint32_t* start_index,
                             uint32_t* end_index)
     {

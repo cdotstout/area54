@@ -6,7 +6,7 @@
 
 std::unique_ptr<Program> Parser::ParseProgram(const char* json)
 {
-    StaticJsonBuffer<1024> jsonBuffer;
+    StaticJsonBuffer<2048> jsonBuffer;
 
     JsonObject& json_object = jsonBuffer.parseObject(json);
     if (!json_object.success())
@@ -42,6 +42,7 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
             JsonArray& array = json_object["segments"];
 
             AnimatedProgram::Segment segment;
+            segment.start_time = 0;
 
             for (uint32_t i = 0; i < array.size(); i++) {
                 JsonObject& json_segment = array[i];
@@ -70,6 +71,10 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
                     duration = object["duration"];
                     LOG("got duration %u", duration);
                     segment.animation[1] = Animation{start, end, duration};
+                }
+
+                if (json_segment.containsKey("start_time")) {
+                    segment.start_time = json_segment["start_time"];
                 }
 
                 segments.push_back(segment);

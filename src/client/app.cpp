@@ -57,11 +57,11 @@ void App::Update(uint32_t time_ms)
 
         led_.FillColor(0, 0, 0);
 
-        uint32_t segment_index = 0;
-        uint32_t first_index, last_index;
-        while (program_->GetSegment(time_ms, segment_index, &first_index, &last_index)) {
-            led_.SetSegment(first_index, last_index, red, green, blue);
-            segment_index++;
+        for (uint32_t segment_index = 0; segment_index < program_->segment_count();
+             segment_index++) {
+            uint32_t first_index, last_index;
+            if (program_->GetSegment(time_ms, segment_index, &first_index, &last_index))
+                led_.SetSegment(first_index, last_index, red, green, blue);
         }
 
         uint8_t brightness;

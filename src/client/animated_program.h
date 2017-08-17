@@ -37,17 +37,21 @@ public:
 
     struct Segment {
         Animation animation[2];
+        uint32_t start_time;
     };
 
     void SetSegments(std::vector<Segment> segments) { segments_ = std::move(segments); }
 
+    uint32_t segment_count() override { return segments_.size(); }
+
     bool GetSegment(uint32_t time_ms, uint32_t segment_index, uint32_t* start_index,
                     uint32_t* end_index) override
     {
-        if (segment_index >= segments_.size())
+        auto& segment = segments_[segment_index];
+        if (time_ms - time_base() < segment.start_time)
             return false;
-        *start_index = segments_[segment_index].animation[0].get(time_ms - time_base());
-        *end_index = segments_[segment_index].animation[1].get(time_ms - time_base());
+        *start_index = segment.animation[0].get(time_ms - time_base() - segment.start_time);
+        *end_index = segment.animation[1].get(time_ms - time_base() - segment.start_time);
         if (*start_index > *end_index) {
             uint32_t tmp = *start_index;
             *start_index = *end_index;

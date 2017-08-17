@@ -1,0 +1,13 @@
+# sudo cp setbpm.service /etc/systemd/system/setbpm.service
+
+[Unit]
+Description=Set the sequencer BPM
+
+[Service]
+Type=simple
+User=simon
+WorkingDirectory=/home/simon/setbpm
+ExecStart=/usr/bin/python /home/simon/setbpm/server.py
+
+[Install]
+WantedBy=multi-user.target

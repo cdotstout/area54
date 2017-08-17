@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+
+<body>
+    <form id="bpmform" method="post" action="/">
+        <div class="container">
+            <div class="box wide">
+                <input id="bpminput" name="bpm" value="{{ bpm }}" type="number">
+            </div>
+            <div class="box narrow">
+                <button type="button" id="increment">+</button>
+                <button type="button" id="decrement">-</button>
+            </div>
+            <br>
+            <div class="wide">
+                <input id="setbpm" type="button" value="Set">
+            </div>
+        </div>
+    </form>
+</body>
+
+<script>
+    increment.addEventListener('click', function () {
+        bpminput.value++;
+    });
+    decrement.addEventListener('click', function () {
+        bpminput.value--;
+    });
+    setbpm.addEventListener('click', function () {
+        fetch('/', {
+            method: 'POST',
+            body: new FormData(bpmform)
+        });
+    });
+</script>
+
+<style>
+    .wide {
+        width: 15em;
+    }
+    .narrow {
+        width: 5em;
+    }
+    .box {
+        margin: 1em;
+        display: inline-block;
+    }
+    input[type=number] {
+        width: 100%;
+        font-size: 8em;
+    }
+    #setbpm {
+        margin-top: 1em;
+        width: 100%;
+        height: 2em;
+        font-size: 2em;
+    }
+    button {
+        margin: 1em;
+        width: 100%;
+        height: 2em;
+        font-size: 2em;
+    }
+</style>
+</html>
+

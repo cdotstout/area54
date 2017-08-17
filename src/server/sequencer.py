@@ -2,6 +2,8 @@ from collections import OrderedDict
 from threading import Thread
 from time import sleep
 
+import redis
+
 import term
 from audio_player import AudioPlayer
 from mqtt import *
@@ -71,11 +73,23 @@ class BpmSequencer(Sequencer):
 
     def __init__(self, playlist, bpm=120):
         super().__init__()
+        self.redis_connection = redis.StrictRedis()
         self.playlist = playlist
         self.bpm = bpm
         self.timer_thread = None
         self.reset_timer()
         self._continue_timer = True
+
+    @property
+    def bpm(self):
+        current_bpm = int(self.redis_connection.get('bpm'))
+        if current_bpm is None:
+            current_bpm = 120
+        return current_bpm
+
+    @bpm.setter
+    def bpm(self, bpm):
+        self.redis_connection.set('bpm', int(bpm))
 
     def generate_beats(self):
         for current_sequence, num_cycles in self.playlist.items():

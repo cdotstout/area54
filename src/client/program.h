@@ -1,6 +1,7 @@
 #pragma once
 
 #include "animation.h"
+#include "led.h"
 #include <limits>
 #include <memory>
 #include <vector>
@@ -10,21 +11,12 @@ public:
     static constexpr uint32_t kMaxIndex = UINT32_MAX;
 
     virtual ~Program() {}
-    virtual void GetColor(uint32_t time_ms, uint8_t* red_out, uint8_t* green_out,
-                          uint8_t* blue_out) = 0;
+
     virtual void GetBrightness(uint32_t time_ms, uint8_t* brightness_out) = 0;
 
-    virtual uint32_t segment_count() { return 1; }
+    virtual uint32_t segment_count() { return 0; }
 
-    virtual bool GetSegment(uint32_t time_ms, uint32_t segment_index, uint32_t* start_index,
-                            uint32_t* end_index)
-    {
-        if (segment_index > 0)
-            return false;
-        *start_index = 0;
-        *end_index = UINT32_MAX;
-        return true;
-    }
+    virtual Led::Segment* GetSegment(uint32_t segment_index) { return nullptr; }
 
     void Start(uint32_t ms)
     {
@@ -49,14 +41,6 @@ public:
         program->blue_ = blue;
         program->brightness_ = brightness;
         return std::move(program);
-    }
-
-    void GetColor(uint32_t time_ms, uint8_t* red_out, uint8_t* green_out,
-                  uint8_t* blue_out) override
-    {
-        *red_out = red_;
-        *green_out = green_;
-        *blue_out = blue_;
     }
 
     void GetBrightness(uint32_t time_ms, uint8_t* brightness_out) override

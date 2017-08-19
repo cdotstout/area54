@@ -30,49 +30,58 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
     if (strcmp(name, "AnimatedProgram") == 0) {
         auto program = std::unique_ptr<AnimatedProgram>(new AnimatedProgram());
 
-        auto color_sequence = std::vector<std::unique_ptr<AnimationSequence>>(3);
-        auto color = json_object["color"];
-
-        auto hue = color["h"];
-        color_sequence[0].reset(new AnimationSequence());
-        color_sequence[0]->Add(Animation{hue["s"], hue["e"], hue["d"]});
-
-        auto saturation = color["s"];
-        color_sequence[1].reset(new AnimationSequence());
-        color_sequence[1]->Add(Animation{saturation["s"], saturation["e"], saturation["d"]});
-
-        auto value = color["v"];
-        color_sequence[2].reset(new AnimationSequence());
-        color_sequence[2]->Add(Animation{value["s"], value["e"], value["d"]});
-
-        program->SetColor(std::move(color_sequence));
-
         if (json_object.containsKey("segments")) {
-            auto segments = std::vector<AnimatedProgram::Segment>();
+            auto segments = std::vector<std::unique_ptr<AnimatedProgram::Segment>>();
 
             JsonArray& array = json_object["segments"];
-
-            AnimatedProgram::Segment segment;
-            segment.start_time = 0;
 
             for (uint32_t i = 0; i < array.size(); i++) {
                 JsonObject& json_segment = array[i];
 
+                auto segment =
+                    std::unique_ptr<AnimatedProgram::Segment>(new AnimatedProgram::Segment);
+                segment->start_time = 0;
+                segment->keepalive = false;
+
+                uint32_t duration = json_segment["duration"];
+
                 if (json_segment.containsKey("0")) {
                     JsonObject& object = json_segment["0"];
-                    segment.animation[0] = Animation{object["s"], object["e"], object["d"]};
+                    segment->animation[0] = Animation{object["s"], object["e"], duration};
                 }
 
                 if (json_segment.containsKey("1")) {
                     JsonObject& object = json_segment["1"];
-                    segment.animation[1] = Animation{object["s"], object["e"], object["d"]};
+                    segment->animation[1] = Animation{object["s"], object["e"], duration};
                 }
 
                 if (json_segment.containsKey("start_time")) {
-                    segment.start_time = json_segment["start_time"];
+                    segment->start_time = json_segment["start_time"];
+                }
+                if (json_segment.containsKey("keepalive")) {
+                    segment->keepalive = json_segment["keepalive"];
                 }
 
-                segments.push_back(segment);
+                if (json_segment.containsKey("hue_grad")) {
+                    auto hue = json_segment["hue_grad"];
+                    segment->hue_gradient[0] = hue["s"];
+                    segment->hue_gradient[1] = hue["e"];
+                } else if (json_segment.containsKey("hue_anim")) {
+                    auto hue = json_segment["hue_anim"];
+                    segment->hue_animation.reset(new Animation(hue["s"], hue["e"], duration));
+                } else {
+                    segment->hue_gradient[0] = 255;
+                    segment->hue_gradient[1] = 255;
+                }
+
+                if (json_segment.containsKey("sat_anim")) {
+                    auto saturation = json_segment["sat_anim"];
+                    segment->saturation_animation.reset(
+                        new Animation(saturation["s"], saturation["e"], duration));
+                }
+
+                segment->end_time = segment->start_time + duration;
+                segments.push_back(std::move(segment));
             }
 
             program->SetSegments(std::move(segments));

@@ -23,6 +23,7 @@ public:
     void FillColor(uint8_t red, uint8_t green, uint8_t blue) override;
     void SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uint8_t green,
                     uint8_t blue) override;
+    void DrawSegment(Segment* segment, uint32_t time_ms) override;
     void SetBrightness(uint8_t brightness) override;
     void Show() override;
 
@@ -58,6 +59,11 @@ void FastLed::SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red,
     for (uint32_t i = first_index; i <= last_index; i++) {
         leds_[i] = color;
     }
+}
+
+void FastLed::DrawSegment(Segment* segment, uint32_t time_ms)
+{
+    segment->Draw(leds_.data(), time_ms);
 }
 
 void FastLed::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(brightness)); }

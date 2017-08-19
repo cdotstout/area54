@@ -49,20 +49,17 @@ void App::Update(uint32_t time_ms)
     }
 
     if (program_) {
-        uint8_t red, green, blue;
-        program_->GetColor(time_ms, &red, &green, &blue);
-
         led_->FillColor(0, 0, 0);
 
         for (uint32_t segment_index = 0; segment_index < program_->segment_count();
              segment_index++) {
-            uint32_t first_index, last_index;
-            if (program_->GetSegment(time_ms, segment_index, &first_index, &last_index))
-                led_->SetSegment(first_index, last_index, red, green, blue);
+            auto segment = program_->GetSegment(segment_index);
+            if (segment)
+                led_->DrawSegment(segment, time_ms - program_->time_base());
         }
 
         uint8_t brightness;
-        program_->GetBrightness(time_ms, &brightness);
+        program_->GetBrightness(time_ms - program_->time_base(), &brightness);
         led_->SetBrightness(brightness);
     }
 

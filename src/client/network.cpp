@@ -21,7 +21,7 @@ void WifiNetwork::Connect()
     const char* ssid = kSsid;
     const char* password = kPassword;
 
-    WiFi.hostname("LED2");
+    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {

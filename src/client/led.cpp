@@ -1,6 +1,7 @@
 #include "led.h"
 #include "log.h"
 #include <cstdint>
+#include <vector>
 
 #define FASTLED_ESP8266_NODEMCU_PIN_ORDER
 #include "FastLED.h"
@@ -11,23 +12,41 @@
 
 constexpr ESPIChipsets kLedType = LPD8806;
 constexpr EOrder kColorOrder = GRB;
+constexpr uint32_t kNumLeds = 54;
 
-Led::Led(uint32_t num_leds) : num_leds_(num_leds) { leds_ = new CRGB[num_leds_]; }
+class FastLed : public Led {
+public:
+    FastLed(uint32_t num_leds) : num_leds_(num_leds), leds_(num_leds_) {}
 
-Led::~Led() { delete leds_; }
+    void Init() override;
+    void Clear() override;
+    void FillColor(uint8_t red, uint8_t green, uint8_t blue) override;
+    void SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uint8_t green,
+                    uint8_t blue) override;
+    void SetBrightness(uint8_t brightness) override;
+    void Show() override;
 
-void Led::Clear() { FastLED.clear(true); }
+private:
+    uint32_t num_leds_;
+    std::vector<CRGB> leds_;
 
-void Led::FillColor(uint8_t red, uint8_t green, uint8_t blue)
+    uint8_t red_ = 0;
+    uint8_t green_ = 0;
+    uint8_t blue_ = 0;
+};
+
+void FastLed::Clear() { FastLED.clear(true); }
+
+void FastLed::FillColor(uint8_t red, uint8_t green, uint8_t blue)
 {
     red_ = red;
     green_ = green;
     blue_ = blue;
-    fill_solid(leds_, num_leds_, CRGB(red_, green_, blue_));
+    fill_solid(leds_.data(), num_leds_, CRGB(red_, green_, blue_));
 }
 
-void Led::SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uint8_t green,
-                     uint8_t blue)
+void FastLed::SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uint8_t green,
+                         uint8_t blue)
 {
     if (first_index < 0)
         first_index = 0;
@@ -41,17 +60,19 @@ void Led::SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red, uin
     }
 }
 
-void Led::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(brightness)); }
+void FastLed::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(brightness)); }
 
-void Led::Init()
+void FastLed::Init()
 {
-    FastLED.addLeds<kLedType, 1, 2, kColorOrder>(leds_, num_leds_)
+    FastLED.addLeds<kLedType, 1, 2, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
-    FastLED.addLeds<kLedType, 3, 4, kColorOrder>(leds_, num_leds_)
+    FastLED.addLeds<kLedType, 3, 4, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
-    FastLED.addLeds<kLedType, 5, 6, kColorOrder>(leds_, num_leds_)
+    FastLED.addLeds<kLedType, 5, 6, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
     Clear();
 }
 
-void Led::Show() { FastLED.show(); }
+void FastLed::Show() { FastLED.show(); }
+
+std::unique_ptr<Led> Led::Create() { return std::unique_ptr<Led>(new FastLed(kNumLeds)); }

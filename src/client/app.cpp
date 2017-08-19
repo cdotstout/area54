@@ -5,24 +5,21 @@
 #include "transport.h"
 #include <cstdint>
 
-constexpr uint32_t kNumLeds = 54;
-
-App::App() : led_(kNumLeds) {}
-
 extern "C" void delay(uint32_t ms);
 
 bool App::Init()
 {
-    led_.Init();
-    led_.FillColor(255, 0, 0);
-    led_.Show();
+    led_ = Led::Create();
+    led_->Init();
+    led_->FillColor(255, 0, 0);
+    led_->Show();
     delay(500);
 
     network_ = Network::Create();
     network_->Connect();
 
-    led_.FillColor(0, 255, 0);
-    led_.Show();
+    led_->FillColor(0, 255, 0);
+    led_->Show();
     delay(500);
 
     uint8_t mac[7]{};
@@ -38,8 +35,8 @@ bool App::Init()
     });
     transport_->Connect({topic.data(), "area54/all"});
 
-    led_.FillColor(0, 0, 255);
-    led_.Show();
+    led_->FillColor(0, 0, 255);
+    led_->Show();
 
     return true;
 }
@@ -55,21 +52,21 @@ void App::Update(uint32_t time_ms)
         uint8_t red, green, blue;
         program_->GetColor(time_ms, &red, &green, &blue);
 
-        led_.FillColor(0, 0, 0);
+        led_->FillColor(0, 0, 0);
 
         for (uint32_t segment_index = 0; segment_index < program_->segment_count();
              segment_index++) {
             uint32_t first_index, last_index;
             if (program_->GetSegment(time_ms, segment_index, &first_index, &last_index))
-                led_.SetSegment(first_index, last_index, red, green, blue);
+                led_->SetSegment(first_index, last_index, red, green, blue);
         }
 
         uint8_t brightness;
         program_->GetBrightness(time_ms, &brightness);
-        led_.SetBrightness(brightness);
+        led_->SetBrightness(brightness);
     }
 
-    led_.Show();
+    led_->Show();
 
     transport_->Loop();
 }

@@ -12,7 +12,7 @@ void setup()
 
     LOG("setup begin");
 
-    g_app = std::unique_ptr<App>(new App());
+    g_app = std::unique_ptr<App>(new App);
     if (!g_app->Init()) {
         g_app.reset();
         LOG("app init failed");

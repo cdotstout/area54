@@ -8,8 +8,6 @@
 
 class App {
 public:
-    App();
-
     bool Init();
 
     void Update(uint32_t time_ms);
@@ -17,7 +15,7 @@ public:
 private:
     void Callback(char* topic, uint8_t* payload, unsigned int length);
 
-    Led led_;
+    std::unique_ptr<Led> led_;
     std::unique_ptr<Program> program_;
     std::unique_ptr<Program> pending_program_;
     std::unique_ptr<Network> network_;

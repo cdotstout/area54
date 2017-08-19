@@ -5,7 +5,7 @@
 #include "transport.h"
 #include <cstdint>
 
-extern "C" void delay(uint32_t ms);
+extern "C" void delay(long unsigned int ms);
 
 bool App::Init()
 {

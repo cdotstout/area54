@@ -29,12 +29,23 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
 
     if (strcmp(name, "AnimatedProgram") == 0) {
         auto program = std::unique_ptr<AnimatedProgram>(new AnimatedProgram());
-        uint8_t red = json_object["red"];
-        uint8_t green = json_object["green"];
-        uint8_t blue = json_object["blue"];
-        LOG("got AnimatedProgram color %u:%u:%u", red, green, blue);
 
-        program->SetColor(red, green, blue);
+        auto color_sequence = std::vector<std::unique_ptr<AnimationSequence>>(3);
+        auto color = json_object["color"];
+
+        auto hue = color["h"];
+        color_sequence[0].reset(new AnimationSequence());
+        color_sequence[0]->Add(Animation{hue["s"], hue["e"], hue["d"]});
+
+        auto saturation = color["s"];
+        color_sequence[1].reset(new AnimationSequence());
+        color_sequence[1]->Add(Animation{saturation["s"], saturation["e"], saturation["d"]});
+
+        auto value = color["v"];
+        color_sequence[2].reset(new AnimationSequence());
+        color_sequence[2]->Add(Animation{value["s"], value["e"], value["d"]});
+
+        program->SetColor(std::move(color_sequence));
 
         if (json_object.containsKey("segments")) {
             auto segments = std::vector<AnimatedProgram::Segment>();
@@ -47,30 +58,14 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
             for (uint32_t i = 0; i < array.size(); i++) {
                 JsonObject& json_segment = array[i];
 
-                uint32_t start = 0;
-                uint32_t end = 0;
-                uint32_t duration = 3000;
-
                 if (json_segment.containsKey("0")) {
                     JsonObject& object = json_segment["0"];
-                    start = object["start"];
-                    LOG("got first %u", start);
-                    end = object["end"];
-                    LOG("got end %u", end);
-                    duration = object["duration"];
-                    LOG("got duration %u", duration);
-                    segment.animation[0] = Animation{start, end, duration};
+                    segment.animation[0] = Animation{object["s"], object["e"], object["d"]};
                 }
 
                 if (json_segment.containsKey("1")) {
                     JsonObject& object = json_segment["1"];
-                    start = object["start"];
-                    LOG("got first %u", start);
-                    end = object["end"];
-                    LOG("got end %u", end);
-                    duration = object["duration"];
-                    LOG("got duration %u", duration);
-                    segment.animation[1] = Animation{start, end, duration};
+                    segment.animation[1] = Animation{object["s"], object["e"], object["d"]};
                 }
 
                 if (json_segment.containsKey("start_time")) {
@@ -89,27 +84,8 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
             JsonArray& brightness_array = json_object["brightness"];
 
             for (uint32_t i = 0; i < brightness_array.size(); i++) {
-                uint8_t start = 0;
-                uint8_t end = 0;
-                uint32_t duration = 3000;
-
                 JsonObject& brightness = brightness_array[i];
-                if (brightness.containsKey("start")) {
-                    start = brightness["start"];
-                    LOG("got start %u", start);
-                }
-
-                if (brightness.containsKey("end")) {
-                    end = brightness["end"];
-                    LOG("got end %u", end);
-                }
-
-                if (brightness.containsKey("duration")) {
-                    duration = brightness["duration"];
-                    LOG("got duration %u", duration);
-                }
-
-                sequence->Add(Animation{start, end, duration});
+                sequence->Add(Animation{brightness["s"], brightness["e"], brightness["d"]});
             }
 
             program->SetBrightness(std::move(sequence));

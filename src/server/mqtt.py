@@ -9,7 +9,7 @@ BEACON2 = 'area54/a020a616c8ed'
 BEACON3 = 'area54/a020a61bdf18'
 BEACON4 = 'area54/a020a61bc23f'
 BEACON5 = 'area54/a020a61bd9cc'
-BEACON6 = 'area54/a020a61bd8aa'
+BEACON6 = 'area54/6001941c7e9b'
 
 
 class MqttClient(mqtt_client.Client):

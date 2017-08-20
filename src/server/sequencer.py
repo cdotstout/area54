@@ -92,7 +92,7 @@ class BpmSequencer(Sequencer):
         self.redis_connection.set('bpm', int(bpm))
 
     def generate_beats(self):
-        for current_sequence, num_cycles in self.playlist.items():
+        for current_sequence, num_cycles in self.playlist:
             for _ in range(num_cycles):
                 for beat in current_sequence:
                     if beat:
@@ -127,7 +127,7 @@ class BpmSequencer(Sequencer):
         self._continue_timer = True
 
 
-class PlayList(OrderedDict):
+class PlayList(tuple):
     pass
 
 
@@ -176,11 +176,44 @@ def test2():
 
 
 def test3():
-    test_cue = Cue((BEACON1, ), 'red')
-    test_beat = Beat([test_cue, ])
-    test_seq = BeatSequence((test_beat, test_beat, None, None))
-    playlist = PlayList({test_seq: 1, })
-    return BpmSequencer(playlist, 118)
+    test_cue1 = Cue((BEACON1, ), 'new')
+    test_cue2 = Cue((BEACON2, ), 'new')
+    test_cue3 = Cue((BEACON3, ), 'new')
+    test_cue4 = Cue((BEACON4, ), 'new')
+    test_cue5 = Cue((BEACON5, ), 'new')
+    test_cue6 = Cue((BEACON6, ), 'new')
+    test_beat1 = Beat([test_cue1, test_cue2, test_cue3, test_cue4, test_cue5, test_cue6])
+    # test_beat2 = Beat([test_cue2, ])
+    # test_beat3 = Beat([test_cue3, ])
+    # test_beat4 = Beat([test_cue4, ])
+    # test_beat5 = Beat([test_cue5, ])
+    # test_beat6 = Beat([test_cue6, ])
+    test_seq1 = BeatSequence((test_beat1, ))
+    # cue1 = Cue((BEACON1, BEACON3, BEACON5), 'redfast')
+    # cue2 = Cue((BEACON4, BEACON6), 'redfast')
+    # cue3 = Cue((BEACON1, BEACON3, BEACON4, BEACON5, BEACON6, ), 'game_over')
+    # beat1 = Beat([cue1, ])
+    # beat2 = Beat([cue2, ])
+    # beat3 = Beat([cue3, ])
+    # seq2 = BeatSequence((beat1,
+    #                      beat2,
+    #                      beat1,
+    #                      beat2,
+    #                      beat1, ))
+    # seq3 = BeatSequence((beat3,
+    #                      None,
+    #                      beat3,
+    #                      None,
+    #                      beat3, ))
+    # seq4 = BeatSequence((beat3, ))
+    # noneseq = BeatSequence((None,
+    #                        None,
+    #                        None,
+    #                        None,
+    #                        None, ))
+    playlist = PlayList(((test_seq1, 1), ))
+
+    return BpmSequencer(playlist, 120)
 
 
 if __name__ == '__main__':

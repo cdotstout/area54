@@ -32,10 +32,15 @@ bool App::Init()
     snprintf(topic.data(), topic.size(), "area54/%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2],
              mac[3], mac[4], mac[5]);
 
-    transport_ = Transport::Create([this](char* topic, uint8_t* payload, unsigned int length) {
-        this->Callback(topic, payload, length);
-    });
-    transport_->Connect({topic.data(), "area54/all"});
+    transport_ = Transport::Create({topic.data(), "area54/all"},
+                                   [this](char* topic, uint8_t* payload, unsigned int length) {
+                                       this->Callback(topic, payload, length);
+                                   });
+
+    while (!transport_->Connect()) {
+        LOG("connect failed, try again in 5 seconds");
+        delay(5000);
+    }
 
     led_->FillColor(0, 0, 255);
     led_->Show();
@@ -67,7 +72,13 @@ void App::Update(uint32_t time_ms)
 
     led_->Show();
 
-    transport_->Loop();
+    if (!transport_->IsConnected()) {
+        LOG("lost connection, attempting to reconnect");
+        transport_->Connect();
+    }
+
+    if (transport_->IsConnected())
+        transport_->Loop();
 
     if (http_server_)
         http_server_->Loop();

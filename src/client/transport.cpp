@@ -14,59 +14,59 @@ public:
     static constexpr char* kServer = "192.168.0.10";
     static constexpr uint32_t kPort = 1883;
 
-    MqttTransport(std::function<void(char*, uint8_t*, unsigned int)> callback)
-        : client_(wifi_client_), callback_(callback)
+    MqttTransport(std::vector<std::string> topics,
+                  std::function<void(char*, uint8_t*, unsigned int)> callback)
+        : topics_(std::move(topics)), client_(wifi_client_), callback_(callback)
     {
     }
 
-    void Connect(std::vector<const char*> topics) override;
+    bool IsConnected() override { return client_.connected(); }
 
-    void Loop() override
-    {
-        if (!client_.connected())
-            LOG("PubSubClient not connected");
-        client_.loop();
-    }
+    bool Connect() override;
+
+    void Loop() override { client_.loop(); }
 
 private:
     void callback(char* topic, byte* payload, unsigned int length);
 
+    std::vector<std::string> topics_;
     WiFiClient wifi_client_;
     PubSubClient client_;
     std::function<void(char*, uint8_t*, unsigned int)> callback_;
 };
 
-void MqttTransport::Connect(std::vector<const char*> topics)
+bool MqttTransport::Connect()
 {
+    if (IsConnected())
+        return true;
+
     randomSeed(micros());
 
     client_.setServer(kServer, kPort);
     client_.setCallback(callback_);
 
-    // Loop until we're reconnected
-    while (!client_.connected()) {
-        LOG("Attempting MQTT connection to %s:%u", kServer, kPort);
+    LOG("Attempting MQTT connection to %s:%u", kServer, kPort);
 
-        // Create a random client ID
-        String clientId = "ESP8266Client-";
-        clientId += String(random(0xffff), HEX);
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
 
-        if (client_.connect(clientId.c_str()))
-            break;
-
+    if (!client_.connect(clientId.c_str())) {
         LOG("connect failed, rc=%d", client_.state());
-        LOG(" try again in 5 seconds");
-        delay(5000);
+        return false;
     }
 
-    for (const char* topic : topics) {
-        LOG("connected, subscribing to topic %s", topic);
-        client_.subscribe(topic);
+    for (auto& topic : topics_) {
+        LOG("connected, subscribing to topic %s", topic.c_str());
+        client_.subscribe(topic.c_str());
     }
+
+    return true;
 }
 
 std::unique_ptr<Transport>
-Transport::Create(std::function<void(char*, uint8_t*, unsigned int)> callback)
+Transport::Create(std::vector<std::string> topics,
+                  std::function<void(char*, uint8_t*, unsigned int)> callback)
 {
-    return std::unique_ptr<Transport>(new MqttTransport(callback));
+    return std::unique_ptr<Transport>(new MqttTransport(std::move(topics), callback));
 }

@@ -69,9 +69,11 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
                 } else if (json_segment.containsKey("hue_anim")) {
                     auto hue = json_segment["hue_anim"];
                     segment->hue_animation.reset(new Animation(hue["s"], hue["e"], duration));
+                } else if (json_segment.containsKey("hue")) {
+                    auto hue = json_segment["hue"];
+                    segment->hue_animation.reset(new Animation(hue, hue, duration));
                 } else {
-                    segment->hue_gradient[0] = 255;
-                    segment->hue_gradient[1] = 255;
+                    segment->hue_animation.reset(new Animation(0, 0, duration));
                 }
 
                 if (json_segment.containsKey("sat_anim")) {

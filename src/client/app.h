@@ -1,5 +1,6 @@
 #pragma once
 
+#include "http_server.h"
 #include "led.h"
 #include "network.h"
 #include "program.h"
@@ -20,4 +21,5 @@ private:
     std::unique_ptr<Program> pending_program_;
     std::unique_ptr<Network> network_;
     std::unique_ptr<Transport> transport_;
+    std::unique_ptr<HttpServer> http_server_;
 };

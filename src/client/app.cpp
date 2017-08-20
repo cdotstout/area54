@@ -18,6 +18,8 @@ bool App::Init()
     network_ = Network::Create();
     network_->Connect();
 
+    http_server_ = HttpServer::Create();
+
     led_->FillColor(0, 255, 0);
     led_->Show();
     delay(500);
@@ -66,6 +68,9 @@ void App::Update(uint32_t time_ms)
     led_->Show();
 
     transport_->Loop();
+
+    if (http_server_)
+        http_server_->Loop();
 }
 
 void App::Callback(char* topic, uint8_t* payload, unsigned int length)

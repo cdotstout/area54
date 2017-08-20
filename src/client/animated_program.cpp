@@ -3,7 +3,7 @@
 #include "animated_program.h"
 #include "FastLED.h"
 
-void AnimatedProgram::Segment::Draw(CRGB* led_array, uint32_t time_ms)
+void AnimatedProgram::Segment::Draw(std::vector<CRGB>& led_array, uint32_t time_ms)
 {
     if (time_ms < start_time)
         return;
@@ -33,6 +33,7 @@ void AnimatedProgram::Segment::Draw(CRGB* led_array, uint32_t time_ms)
                 hue += delta;
             }
         }
-        led_array[index] = CRGB(CHSV(hue, saturation, 255));
+        if (index < led_array.size())
+            led_array[index] = CRGB(CHSV(hue, saturation, 255));
     }
 }

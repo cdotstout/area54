@@ -24,7 +24,7 @@ public:
 
     class Segment : public Led::Segment {
     public:
-        void Draw(CRGB* led_array, uint32_t time_ms) override;
+        void Draw(std::vector<CRGB>& led_array, uint32_t time_ms) override;
 
         Animation animation[2];
         uint32_t start_time;

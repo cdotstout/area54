@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 struct CRGB;
 
@@ -10,7 +11,7 @@ public:
     class Segment {
     public:
         virtual ~Segment() {}
-        virtual void Draw(CRGB* led_array, uint32_t time_ms) = 0;
+        virtual void Draw(std::vector<CRGB>& led_array, uint32_t time_ms) = 0;
     };
 
     virtual ~Led() {}

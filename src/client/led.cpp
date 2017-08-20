@@ -61,10 +61,7 @@ void FastLed::SetSegment(uint32_t first_index, uint32_t last_index, uint8_t red,
     }
 }
 
-void FastLed::DrawSegment(Segment* segment, uint32_t time_ms)
-{
-    segment->Draw(leds_.data(), time_ms);
-}
+void FastLed::DrawSegment(Segment* segment, uint32_t time_ms) { segment->Draw(leds_, time_ms); }
 
 void FastLed::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin(brightness)); }
 

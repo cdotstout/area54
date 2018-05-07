@@ -15,32 +15,34 @@ bool App::Init()
     led_->Show();
     delay(500);
 
-    network_ = Network::Create();
+    network_ = Network::Create([this](char* topic, const uint8_t* payload, unsigned int length) {
+                                    this->Callback(topic, payload, length);
+                                });
     network_->Connect();
 
-    http_server_ = HttpServer::Create();
+    // http_server_ = HttpServer::Create();
 
     led_->FillColor(0, 255, 0);
     led_->Show();
     delay(500);
 
-    uint8_t mac[7]{};
-    network_->GetMacAddress(mac);
-    mac[6] = 0;
+    // uint8_t mac[7]{};
+    // network_->GetMacAddress(mac);
+    // mac[6] = 0;
 
-    std::vector<char> topic(32);
-    snprintf(topic.data(), topic.size(), "area54/%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2],
-             mac[3], mac[4], mac[5]);
+    // std::vector<char> topic(32);
+    // snprintf(topic.data(), topic.size(), "area54/%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2],
+    //          mac[3], mac[4], mac[5]);
 
-    transport_ = Transport::Create({topic.data(), "area54/all"},
-                                   [this](char* topic, uint8_t* payload, unsigned int length) {
-                                       this->Callback(topic, payload, length);
-                                   });
+    // transport_ = Transport::Create({topic.data(), "area54/all"},
+    //                                [this](char* topic, uint8_t* payload, unsigned int length) {
+    //                                    this->Callback(topic, payload, length);
+    //                                });
 
-    while (!transport_->Connect()) {
-        LOG("connect failed, try again in 5 seconds");
-        delay(5000);
-    }
+    // while (!transport_->Connect()) {
+    //     LOG("connect failed, try again in 5 seconds");
+    //     delay(5000);
+    // }
 
     led_->FillColor(0, 0, 255);
     led_->Show();
@@ -72,20 +74,20 @@ void App::Update(uint32_t time_ms)
 
     led_->Show();
 
-    if (!transport_->IsConnected()) {
-        LOG("lost connection, attempting to reconnect");
-        transport_->Connect();
-    }
+    // if (!transport_->IsConnected()) {
+    //     LOG("lost connection, attempting to reconnect");
+    //     transport_->Connect();
+    // }
 
-    if (transport_->IsConnected())
-        transport_->Loop();
+    // if (transport_->IsConnected())
+    //     transport_->Loop();
 
-    if (http_server_)
-        http_server_->Loop();
+    // if (http_server_)
+    //     http_server_->Loop();
 }
 
-void App::Callback(char* topic, uint8_t* payload, unsigned int length)
+void App::Callback(char* topic, const uint8_t* payload, unsigned int length)
 {
-    LOG("Callback topic %s length %u", topic, length);
-    pending_program_ = Parser::ParseProgram(reinterpret_cast<char*>(payload));
+    //LOG("Callback topic %s length %u", topic, length);
+    pending_program_ = Parser::ParseProgram(reinterpret_cast<const char*>(payload));
 }

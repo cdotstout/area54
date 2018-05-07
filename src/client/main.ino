@@ -6,6 +6,8 @@ constexpr uint32_t kMsPerFrame = 1000 / kFramesPerSecond;
 
 std::unique_ptr<App> g_app;
 
+static unsigned long g_frame_start;
+
 void setup()
 {
     Serial.begin(115200);
@@ -29,5 +31,10 @@ void loop()
     if (g_app)
         g_app->Update(time_ms);
 
-    delay(kMsPerFrame);
+    if (time_ms - g_frame_start >= 1000) {
+        LOG("tick");
+        g_frame_start = time_ms;
+    }
+
+    //delay(kMsPerFrame);
 }

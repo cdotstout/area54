@@ -9,5 +9,5 @@ public:
     virtual void Connect() = 0;
     virtual void GetMacAddress(uint8_t mac[6]) = 0;
 
-    static std::unique_ptr<Network> Create();
+    static std::unique_ptr<Network> Create(std::function<void(char*, const uint8_t*, unsigned int)> callback);
 };

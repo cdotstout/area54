@@ -14,7 +14,7 @@ public:
     void Update(uint32_t time_ms);
 
 private:
-    void Callback(char* topic, uint8_t* payload, unsigned int length);
+    void Callback(char* topic, const uint8_t* payload, unsigned int length);
 
     std::unique_ptr<Led> led_;
     std::unique_ptr<Program> program_;

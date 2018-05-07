@@ -2,17 +2,17 @@ from random import randrange, shuffle
 from threading import Thread
 from time import sleep
 
-from audio_player import AudioPlayer
-from mqtt import *
+#from audio_player import AudioPlayer
+from beacon import *
 
 
 class Sequencer:
 
     def __init__(self):
-        self.mqtt_client = MqttClient.get_client()
+        self.beacon_client = BeaconClient.get_client()
 
     def send_animation(self, address, animation):
-        self.mqtt_client.send_animation(address, animation)
+        self.beacon_client.send_animation(address, animation)
 
 
 class GameSequencer(Sequencer):
@@ -229,10 +229,11 @@ def test_simon():
                     BEACON6), 'simon')
     simon_beat = Beat((simon_cue, ))
     simon_seq = BeatSequence((simon_beat, None, simon_beat, None))
-    return PlayList(((simon_seq, 1), )), 120
+    return PlayList(((simon_seq, 1), ), bpm=24)
 
 
-PLAYLISTS = (swirl(), cool(), bounce())
+#PLAYLISTS = (swirl(), cool(), bounce())
+PLAYLISTS = (test_simon(), )
 
 
 if __name__ == '__main__':

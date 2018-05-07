@@ -3,7 +3,10 @@
 #include <cstdint>
 #include <vector>
 
+#if defined(ESP8266)
 #define FASTLED_ESP8266_NODEMCU_PIN_ORDER
+#endif
+
 #include "FastLED.h"
 
 #if defined(FASTLED_VERSION) && (FASTLED_VERSION < 3001000)
@@ -67,12 +70,21 @@ void FastLed::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin
 
 void FastLed::Init()
 {
+#if defined(ESP32)
+    FastLED.addLeds<kLedType, 19, 18, kColorOrder>(leds_.data(), num_leds_)
+        .setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<kLedType, 5, 17, kColorOrder>(leds_.data(), num_leds_)
+        .setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<kLedType, 0, 2, kColorOrder>(leds_.data(), num_leds_)
+        .setCorrection(TypicalLEDStrip);
+#else
     FastLED.addLeds<kLedType, 1, 2, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
     FastLED.addLeds<kLedType, 3, 4, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
     FastLED.addLeds<kLedType, 5, 6, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
+#endif
     Clear();
 }
 

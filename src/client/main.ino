@@ -1,9 +1,6 @@
 #include "app.h"
 #include "log.h"
 
-constexpr uint32_t kFramesPerSecond = 120;
-constexpr uint32_t kMsPerFrame = 1000 / kFramesPerSecond;
-
 std::unique_ptr<App> g_app;
 
 void setup()
@@ -24,10 +21,15 @@ void setup()
 
 void loop()
 {
+    static unsigned long g_frame_start = 0;
+
     auto time_ms = millis();
 
     if (g_app)
         g_app->Update(time_ms);
 
-    delay(kMsPerFrame);
+    if (time_ms - g_frame_start >= 1000) {
+        LOG("tick");
+        g_frame_start = time_ms;
+    }
 }

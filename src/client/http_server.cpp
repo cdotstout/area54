@@ -1,3 +1,5 @@
+#if USE_HTTP_SERVER
+
 #include "http_server.h"
 
 #include <ESP8266HTTPUpdateServer.h>
@@ -26,3 +28,5 @@ std::unique_ptr<HttpServer> HttpServer::Create()
 {
     return std::unique_ptr<HttpServer>(new EspHttpServer);
 }
+
+#endif // USE_HTTP_SERVER

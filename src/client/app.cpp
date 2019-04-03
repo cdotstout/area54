@@ -18,7 +18,9 @@ bool App::Init()
     network_ = Network::Create();
     network_->Connect();
 
+#if USE_HTTP_SERVER
     http_server_ = HttpServer::Create();
+#endif
 
     led_->FillColor(0, 255, 0);
     led_->Show();

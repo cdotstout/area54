@@ -4,7 +4,7 @@
 #include "log.h"
 #include <ArduinoJson.h>
 
-std::unique_ptr<Program> Parser::ParseProgram(const char* json)
+std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const char* json)
 {
     StaticJsonBuffer<2048> jsonBuffer;
 
@@ -12,8 +12,34 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* json)
     if (!json_object.success())
         return DRETP(nullptr, "failed to parse json message: %s", json);
 
+    bool should_parse = true;
+
+    const char* device = json_object["device"];
+    if (device) {
+        LOG("got device %s this_device %s", device, this_device);
+        if (strcasecmp(device, this_device) != 0) {
+            should_parse = false;
+        }
+    } else {
+        JsonArray& device_array = json_object["device"];
+        for (uint32_t i = 0; i < device_array.size(); i++) {
+            should_parse = false;
+            device = device_array[i];
+            LOG("got device[%d] %s this_device %s", i, device, this_device);
+            if (strcasecmp(device, this_device) == 0) {
+                should_parse = true;
+                break;
+            }
+        }
+    }
+
+    if (!should_parse)
+        return nullptr;
+
     const char* name = json_object["name"];
-    LOG("got name %s", name);
+    if (name)
+        LOG("got name %s", name);
+
     if (!name)
         return DRETP(nullptr, "name is null");
 

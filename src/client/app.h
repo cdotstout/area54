@@ -22,4 +22,5 @@ private:
     std::unique_ptr<Network> network_;
     std::unique_ptr<Transport> transport_;
     std::unique_ptr<HttpServer> http_server_;
+    std::vector<char> device_addr_;
 };

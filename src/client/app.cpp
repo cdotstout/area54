@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "transport.h"
 #include <cstdint>
+#include <cstring>
 
 extern "C" void delay(long unsigned int ms);
 
@@ -29,6 +30,10 @@ bool App::Init()
     uint8_t mac[7]{};
     network_->GetMacAddress(mac);
     mac[6] = 0;
+
+    device_addr_.resize(6*3);
+    snprintf(device_addr_.data(), device_addr_.size(), "%02x:%02x:%02x:%02x:%02x:%02x",
+        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     std::vector<char> topic(32);
     snprintf(topic.data(), topic.size(), "area54/%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2],
@@ -89,5 +94,5 @@ void App::Update(uint32_t time_ms)
 void App::Callback(char* topic, uint8_t* payload, unsigned int length)
 {
     LOG("Callback topic %s length %u", topic, length);
-    pending_program_ = Parser::ParseProgram(reinterpret_cast<char*>(payload));
+    pending_program_ = Parser::ParseProgram(device_addr_.data(), reinterpret_cast<char*>(payload));
 }

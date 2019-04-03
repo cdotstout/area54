@@ -71,11 +71,12 @@ void FastLed::SetBrightness(uint8_t brightness) { FastLED.setBrightness(dim8_lin
 void FastLed::Init()
 {
 #if defined(ESP32)
+    // Rover board
     FastLED.addLeds<kLedType, 19, 18, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
-    FastLED.addLeds<kLedType, 5, 17, kColorOrder>(leds_.data(), num_leds_)
+    FastLED.addLeds<kLedType, 4, 0, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
-    FastLED.addLeds<kLedType, 0, 2, kColorOrder>(leds_.data(), num_leds_)
+    FastLED.addLeds<kLedType, 2, 15, kColorOrder>(leds_.data(), num_leds_)
         .setCorrection(TypicalLEDStrip);
 #else
     FastLED.addLeds<kLedType, 1, 2, kColorOrder>(leds_.data(), num_leds_)

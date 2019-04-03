@@ -1,18 +1,20 @@
+#!/usr/bin/python3
+
 from random import randrange, shuffle
 from threading import Thread
 from time import sleep
 
-from audio_player import AudioPlayer
-from mqtt import *
+#from audio_player import AudioPlayer
+from beacon import *
 
 
 class Sequencer:
 
     def __init__(self):
-        self.mqtt_client = MqttClient.get_client()
+        self.beacon_client = BeaconClient.get_client()
 
     def send_animation(self, address, animation):
-        self.mqtt_client.send_animation(address, animation)
+        self.beacon_client.send_animation(address, animation)
 
 
 class GameSequencer(Sequencer):
@@ -79,7 +81,7 @@ class BpmSequencer(Sequencer):
         shuffle(shuffled_playlists)
         for playlist in shuffled_playlists:
             self.bpm = playlist.bpm
-            for _ in range(randrange(2, 9, 2)):
+            for _ in range(randrange(4, 9, 2)):
                 beats = playlist.generate_beats()
                 for beat in beats:
                     if beat:
@@ -144,8 +146,9 @@ class Beat(tuple):
 
     def get_messages(self):
         for cue in self:
-            for address in cue.addresses:
-                yield (address, cue.animation)
+            #for address in cue.addresses:
+                #yield (address, cue.animation)
+            yield (cue.addresses, cue.animation)
 
 
 class Cue:
@@ -154,6 +157,19 @@ class Cue:
         self.addresses = addresses
         self.animation = animation
 
+
+def pulse():
+    pulse_cue1 = Cue(BEACON1, 'pulse')
+    pulse_cue2 = Cue(BEACON2, 'pulse')
+    pulse_cue3 = Cue(BEACON3, 'pulse')
+    pulse_beat1 = Beat((pulse_cue1, ))
+    pulse_beat2 = Beat((pulse_cue2, ))
+    pulse_beat3 = Beat((pulse_cue3, ))
+    pulse_seq = BeatSequence((pulse_beat1, None, pulse_beat2, None, 
+        pulse_beat3, None, pulse_beat1, None, 
+        pulse_beat2, None, pulse_beat3, None,
+        ))
+    return PlayList(((pulse_seq, 1), ), bpm=120)
 
 def swirl():
     test_cue1 = Cue((BEACON1, ), 'swirl_pulse')
@@ -205,12 +221,25 @@ def cool():
     cool_cue = Cue((BEACON1,
                     BEACON2,
                     BEACON3,
-                    BEACON4,
-                    BEACON5,
-                    BEACON6), 'cool')
+                    #BEACON4,
+                    #BEACON5,
+                    #BEACON6
+                    ), 'cool')
     cool_beat = Beat((cool_cue, ))
     cool_seq = BeatSequence((cool_beat, None, None, None, None, None, None, None, ))
     return PlayList(((cool_seq, 1), ), bpm=120)
+
+def pattyjill():
+    cue = Cue((BEACON1,
+                    BEACON2,
+                    BEACON3,
+                    #BEACON4,
+                    #BEACON5,
+                    #BEACON6
+                    ), 'tbd')
+    beat = Beat((cue, ))
+    seq = BeatSequence((beat, None, ))
+    return PlayList(((seq, 1), ), bpm=120)
 
 
 def bounce():
@@ -221,21 +250,18 @@ def bounce():
 
 
 def test_simon():
-    simon_cue = Cue((BEACON1,
-                    BEACON2,
-                    BEACON3,
-                    BEACON4,
-                    BEACON5,
-                    BEACON6), 'simon')
+    simon_cue = Cue(ALL_BEACONS, 'simon')
     simon_beat = Beat((simon_cue, ))
     simon_seq = BeatSequence((simon_beat, None, simon_beat, None))
-    return PlayList(((simon_seq, 1), )), 120
+    return PlayList(((simon_seq, 1), ), bpm=24)
 
 
-PLAYLISTS = (swirl(), cool(), bounce())
-
+#PLAYLISTS = (cool(), pulse(), bounce())
+PLAYLISTS = (pattyjill(), )
+#PLAYLISTS = (test_simon(), )
+#PLAYLISTS = (cool(), )
+#PLAYLISTS = (pulse(), )
 
 if __name__ == '__main__':
     seq = BpmSequencer(PLAYLISTS)
     seq.start()
-#

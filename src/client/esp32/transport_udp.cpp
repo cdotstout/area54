@@ -11,7 +11,7 @@
 class UdpTransport : public Transport {
 public:
     UdpTransport(std::function<void(char*, uint8_t*, unsigned int)> callback)
-        : buffer_(20000), callback_(callback)
+        : buffer_(2000), callback_(callback)
     {
     }
 

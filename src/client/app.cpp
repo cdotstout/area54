@@ -94,5 +94,5 @@ void App::Update(uint32_t time_ms)
 void App::Callback(char* topic, uint8_t* payload, unsigned int length)
 {
     LOG("Callback topic %s length %u", topic, length);
-    pending_program_ = Parser::ParseProgram(device_addr_.data(), reinterpret_cast<char*>(payload));
+    pending_program_ = Parser::ParseProgram(device_addr_.data(), payload, length);
 }

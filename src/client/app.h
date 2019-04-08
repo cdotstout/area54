@@ -13,6 +13,8 @@ public:
 
     void Update(uint32_t time_ms);
 
+    Network* network() { return network_.get(); }
+
 private:
     void Callback(char* topic, uint8_t* payload, unsigned int length);
 

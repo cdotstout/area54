@@ -8,6 +8,7 @@ public:
 
     virtual void Connect() = 0;
     virtual void GetMacAddress(uint8_t mac[6]) = 0;
+    virtual int32_t Rssi() = 0;
 
     static std::unique_ptr<Network> Create();
 };

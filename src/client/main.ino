@@ -29,7 +29,7 @@ void loop()
         g_app->Update(time_ms);
 
     if (time_ms - g_frame_start >= 1000) {
-        LOG("tick");
+        LOG("tick rssi %d", g_app->network()->Rssi());
         g_frame_start = time_ms;
     }
 }

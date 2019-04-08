@@ -12,7 +12,7 @@ public:
 
     void Connect() override;
     void GetMacAddress(uint8_t mac[6]) override;
-    long int Rssi();
+    int32_t Rssi() override;
 };
 
 void WifiNetwork::Connect()
@@ -33,6 +33,6 @@ void WifiNetwork::Connect()
 
 void WifiNetwork::GetMacAddress(uint8_t mac[6]) { WiFi.macAddress(mac); }
 
-long int WifiNetwork::Rssi() { return WiFi.RSSI(); }
+int32_t WifiNetwork::Rssi() { return WiFi.RSSI(); }
 
 std::unique_ptr<Network> Network::Create() { return std::unique_ptr<Network>(new WifiNetwork()); }

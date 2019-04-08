@@ -159,9 +159,9 @@ class Cue:
 
 
 def pulse():
-    pulse_cue1 = Cue(BEACON1, 'pulse')
-    pulse_cue2 = Cue(BEACON2, 'pulse')
-    pulse_cue3 = Cue(BEACON3, 'pulse')
+    pulse_cue1 = Cue((BEACON1, ), 'pulse')
+    pulse_cue2 = Cue((BEACON2, ), 'pulse')
+    pulse_cue3 = Cue((BEACON3, ), 'pulse')
     pulse_beat1 = Beat((pulse_cue1, ))
     pulse_beat2 = Beat((pulse_cue2, ))
     pulse_beat3 = Beat((pulse_cue3, ))
@@ -229,16 +229,19 @@ def cool():
     cool_seq = BeatSequence((cool_beat, None, None, None, None, None, None, None, ))
     return PlayList(((cool_seq, 1), ), bpm=120)
 
-def pattyjill():
-    cue = Cue((BEACON1,
+def chase():
+    cue1 = Cue((BEACON1,
                     BEACON2,
                     BEACON3,
-                    #BEACON4,
-                    #BEACON5,
-                    #BEACON6
-                    ), 'tbd')
-    beat = Beat((cue, ))
-    seq = BeatSequence((beat, None, ))
+                    ), 'chase1')
+    cue2 = Cue((BEACON1,
+                    BEACON2,
+                    BEACON3,
+                    ), 'chase2')
+    beat1 = Beat((cue1, ))
+    beat2 = Beat((cue2, ))
+    seq = BeatSequence((beat1, None, None, None, None, None, None, None,
+        beat2, None, None, None, None, None, None, None, ))
     return PlayList(((seq, 1), ), bpm=120)
 
 
@@ -257,7 +260,7 @@ def test_simon():
 
 
 #PLAYLISTS = (cool(), pulse(), bounce())
-PLAYLISTS = (pattyjill(), )
+PLAYLISTS = (cool(), pulse(), chase())
 #PLAYLISTS = (test_simon(), )
 #PLAYLISTS = (cool(), )
 #PLAYLISTS = (pulse(), )

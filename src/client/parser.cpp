@@ -1,135 +1,186 @@
 #include "parser.h"
 
 #include "animated_program.h"
+#include "area54.pb.h"
 #include "log.h"
-#include <ArduinoJson.h>
+#include "pb_decode.h"
 
-std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const char* json)
-{
-    StaticJsonBuffer<2048> jsonBuffer;
+class DeviceList {
+public:
+    using String = std::array<char, 18 + 1>;
 
-    JsonObject& json_object = jsonBuffer.parseObject(json);
-    if (!json_object.success())
-        return DRETP(nullptr, "failed to parse json message: %s", json);
+    const String& get(uint32_t index) { return devices_[index]; }
 
-    bool should_parse = true;
+    size_t size() { return devices_.size(); }
 
-    const char* device = json_object["device"];
-    if (device) {
-        LOG("got device %s this_device %s", device, this_device);
-        if (strcasecmp(device, this_device) != 0) {
-            should_parse = false;
-        }
-    } else {
-        JsonArray& device_array = json_object["device"];
-        for (uint32_t i = 0; i < device_array.size(); i++) {
-            should_parse = false;
-            device = device_array[i];
-            LOG("got device[%d] %s this_device %s", i, device, this_device);
-            if (strcasecmp(device, this_device) == 0) {
-                should_parse = true;
+    static bool decode(pb_istream_t* stream, const pb_field_t* field, void** arg)
+    {
+        String device;
+        if (!pb_read(stream, reinterpret_cast<pb_byte_t*>(device.data()), stream->bytes_left))
+            return DRETF(false, "Decoding device failed: %s\n", PB_GET_ERROR(stream));
+
+        device[device.size() - 1] = 0;
+        LOG("device %s", device.data());
+
+        auto device_list = reinterpret_cast<DeviceList*>(*arg);
+        device_list->devices_.emplace_back(std::move(device));
+
+        return true;
+    }
+
+    std::vector<String> devices_;
+};
+
+class SegmentList {
+public:
+    static bool decode(pb_istream_t* stream, const pb_field_t* field, void** arg)
+    {
+        SegmentMsg segment_msg = SegmentMsg_init_default;
+
+        int status = pb_decode(stream, SegmentMsg_fields, &segment_msg);
+        if (!status)
+            return DRETF(false, "Decoding segment failed: %s\n", PB_GET_ERROR(stream));
+
+        LOG("segment start_time %u duration %u keep_alive %u {%u,%u} {%u,%u} "
+            "hue_type %u hue_start %u hue_stop %u",
+            segment_msg.start_time, segment_msg.duration, segment_msg.keep_alive,
+            segment_msg.begin.start_led, segment_msg.begin.stop_led, segment_msg.end.start_led,
+            segment_msg.end.stop_led, segment_msg.hue_type, segment_msg.hue_start,
+            segment_msg.hue_stop);
+
+        auto segment = std::unique_ptr<AnimatedProgram::Segment>(new AnimatedProgram::Segment);
+
+        segment->start_time = segment_msg.start_time;
+        segment->end_time = segment->start_time + segment_msg.duration;
+        segment->keepalive = segment_msg.keep_alive;
+
+        segment->animation[0] = Animation{segment_msg.begin.start_led, segment_msg.begin.stop_led,
+                                          segment_msg.duration};
+        segment->animation[1] =
+            Animation{segment_msg.end.start_led, segment_msg.end.stop_led, segment_msg.duration};
+
+        switch (segment_msg.hue_type) {
+            case SegmentMsg_HueType_NONE:
+                segment->hue_gradient[0] = 0;
+                segment->hue_gradient[1] = 0;
                 break;
-            }
+            case SegmentMsg_HueType_SINGLE:
+                // Use gradient here instead?
+                segment->hue_animation.reset(new Animation(
+                    segment_msg.hue_start, segment_msg.hue_start, segment_msg.duration));
+                break;
+            case SegmentMsg_HueType_ANIMATION:
+                segment->hue_animation.reset(new Animation(
+                    segment_msg.hue_start, segment_msg.hue_stop, segment_msg.duration));
+                break;
+            case SegmentMsg_HueType_GRADIENT:
+                segment->hue_gradient[0] = segment_msg.hue_start;
+                segment->hue_gradient[1] = segment_msg.hue_stop;
+                break;
+        }
+
+        auto list = reinterpret_cast<SegmentList*>(*arg);
+        list->segments_.emplace_back(std::move(segment));
+
+        return true;
+    }
+
+    void TakeSegments(std::vector<std::unique_ptr<AnimatedProgram::Segment>>* segments_out)
+    {
+        *segments_out = std::move(segments_);
+    }
+
+private:
+    std::vector<std::unique_ptr<AnimatedProgram::Segment>> segments_;
+};
+
+class BrightnessStepList {
+public:
+    static bool decode(pb_istream_t* stream, const pb_field_t* field, void** arg)
+    {
+        BrightnessStepMsg bstep_msg = BrightnessStepMsg_init_default;
+
+        int status = pb_decode(stream, BrightnessStepMsg_fields, &bstep_msg);
+        if (!status)
+            return DRETF(false, "Decoding bstep failed: %s\n", PB_GET_ERROR(stream));
+
+        LOG("bstep start %u stop %u duration %u", bstep_msg.start, bstep_msg.stop,
+            bstep_msg.duration);
+
+        auto list = reinterpret_cast<BrightnessStepList*>(*arg);
+        if (!list->sequence_) {
+            list->sequence_ = std::unique_ptr<AnimationSequence>(new AnimationSequence());
+        }
+        list->sequence_->Add(Animation{bstep_msg.start, bstep_msg.stop, bstep_msg.duration});
+
+        return true;
+    }
+
+    void TakeSequence(std::unique_ptr<AnimationSequence>* sequence_out)
+    {
+        *sequence_out = std::move(sequence_);
+    }
+
+private:
+    std::unique_ptr<AnimationSequence> sequence_;
+};
+
+std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, uint8_t* buffer,
+                                              uint32_t length)
+{
+    LOG("ParseProgram buffer %p length %u", buffer, length);
+
+    AnimationMsg animation = AnimationMsg_init_default;
+
+    DeviceList device_list;
+    animation.device.funcs.decode = DeviceList::decode;
+    animation.device.arg = &device_list;
+
+    SegmentList segment_list;
+    animation.segments.funcs.decode = SegmentList::decode;
+    animation.segments.arg = &segment_list;
+
+    BrightnessStepList bstep_list;
+    animation.brightness_steps.funcs.decode = BrightnessStepList::decode;
+    animation.brightness_steps.arg = &bstep_list;
+
+    pb_istream_t stream = pb_istream_from_buffer(buffer, length);
+
+    int status = pb_decode(&stream, AnimationMsg_fields, &animation);
+    if (!status)
+        return DRETP(nullptr, "Decoding failed: %s\n", PB_GET_ERROR(&stream));
+
+    LOG("decode success: device count %d", device_list.size());
+
+    bool should_parse = false;
+    for (uint32_t i = 0; i < device_list.size(); i++) {
+        auto device = device_list.get(i);
+        LOG("device[%d] %s this_device %s", i, device.data(), this_device);
+        if (strcasecmp(device.data(), this_device) == 0) {
+            should_parse = true;
+            break;
         }
     }
 
     if (!should_parse)
         return nullptr;
 
-    const char* name = json_object["name"];
-    if (name)
-        LOG("got name %s", name);
+    animation.name[sizeof(animation.name) - 1] = 0;
+    LOG("name %s\n", animation.name);
 
-    if (!name)
-        return DRETP(nullptr, "name is null");
-
-    if (strcmp(name, "SimpleProgram") == 0) {
-        uint8_t red = json_object["red"];
-        uint8_t green = json_object["green"];
-        uint8_t blue = json_object["blue"];
-        uint8_t brightness = json_object["brightness"];
-        LOG("got SimpleProgram color %u:%u:%u brightness %u", red, green, blue, brightness);
-
-        return SimpleProgram::Create(red, green, blue, brightness);
-    }
-
-    if (strcmp(name, "AnimatedProgram") == 0) {
+    if (strcmp(animation.name, "AnimatedProgram") == 0) {
         auto program = std::unique_ptr<AnimatedProgram>(new AnimatedProgram());
 
-        if (json_object.containsKey("segments")) {
-            auto segments = std::vector<std::unique_ptr<AnimatedProgram::Segment>>();
+        std::vector<std::unique_ptr<AnimatedProgram::Segment>> segments;
+        segment_list.TakeSegments(&segments);
+        program->SetSegments(std::move(segments));
 
-            JsonArray& array = json_object["segments"];
-
-            for (uint32_t i = 0; i < array.size(); i++) {
-                JsonObject& json_segment = array[i];
-
-                auto segment =
-                    std::unique_ptr<AnimatedProgram::Segment>(new AnimatedProgram::Segment);
-                segment->start_time = 0;
-                segment->keepalive = false;
-
-                uint32_t duration = json_segment["duration"];
-
-                if (json_segment.containsKey("0")) {
-                    JsonObject& object = json_segment["0"];
-                    segment->animation[0] = Animation{object["s"], object["e"], duration};
-                }
-
-                if (json_segment.containsKey("1")) {
-                    JsonObject& object = json_segment["1"];
-                    segment->animation[1] = Animation{object["s"], object["e"], duration};
-                }
-
-                if (json_segment.containsKey("start_time")) {
-                    segment->start_time = json_segment["start_time"];
-                }
-                if (json_segment.containsKey("keepalive")) {
-                    segment->keepalive = json_segment["keepalive"];
-                }
-
-                if (json_segment.containsKey("hue_grad")) {
-                    auto hue = json_segment["hue_grad"];
-                    segment->hue_gradient[0] = hue["s"];
-                    segment->hue_gradient[1] = hue["e"];
-                } else if (json_segment.containsKey("hue_anim")) {
-                    auto hue = json_segment["hue_anim"];
-                    segment->hue_animation.reset(new Animation(hue["s"], hue["e"], duration));
-                } else if (json_segment.containsKey("hue")) {
-                    auto hue = json_segment["hue"];
-                    segment->hue_animation.reset(new Animation(hue, hue, duration));
-                } else {
-                    segment->hue_animation.reset(new Animation(0, 0, duration));
-                }
-
-                if (json_segment.containsKey("sat_anim")) {
-                    auto saturation = json_segment["sat_anim"];
-                    segment->saturation_animation.reset(
-                        new Animation(saturation["s"], saturation["e"], duration));
-                }
-
-                segment->end_time = segment->start_time + duration;
-                segments.push_back(std::move(segment));
-            }
-
-            program->SetSegments(std::move(segments));
-        }
-
-        if (json_object.containsKey("brightness")) {
-            auto sequence = std::unique_ptr<AnimationSequence>(new AnimationSequence());
-
-            JsonArray& brightness_array = json_object["brightness"];
-
-            for (uint32_t i = 0; i < brightness_array.size(); i++) {
-                JsonObject& brightness = brightness_array[i];
-                sequence->Add(Animation{brightness["s"], brightness["e"], brightness["d"]});
-            }
-
-            program->SetBrightness(std::move(sequence));
-        }
+        std::unique_ptr<AnimationSequence> sequence;
+        bstep_list.TakeSequence(&sequence);
+        program->SetBrightness(std::move(sequence));
 
         return std::move(program);
     }
 
-    return DRETP(nullptr, "unknown program: %s", name);
+    return DRETP(nullptr, "unknown program: %s", animation.name);
 }

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+message EndpointMsg {
+	uint32 start_led = 1;
+	uint32 stop_led = 2;
+}
+
+message SegmentMsg {
+    uint32 start_time = 1;
+	uint32 duration = 2;
+	bool keep_alive = 3;
+	EndpointMsg begin = 4;
+	EndpointMsg end = 5;
+	enum HueType {
+		NONE = 0;
+		SINGLE = 1;
+		GRADIENT = 2;
+		ANIMATION = 3;
+	}
+	HueType hue_type = 6;
+	uint32 hue_start = 7;
+	uint32 hue_stop = 8;
+}
+
+message BrightnessStepMsg {
+	uint32 start = 1;
+	uint32 stop = 2;
+	uint32 duration = 3;
+}
+
+message AnimationMsg {
+    repeated string device = 1;
+	string name = 2;
+	repeated SegmentMsg segments = 3;
+	repeated BrightnessStepMsg brightness_steps = 4;
+}

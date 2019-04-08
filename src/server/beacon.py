@@ -1,7 +1,7 @@
 import json
 import socket
 
-from animations import ANIMATIONS
+from animations import AnimationGenerator
 
 MCAST_GRP = '224.1.1.1'
 MCAST_PORT = 5007
@@ -47,11 +47,8 @@ class BeaconClient:
         self.sock.setsockopt(socket.SOL_SOCKET, 25, str("wlan0"+'\0').encode('utf-8'))
 
     def send_animation(self, addresses, animation='simon'):
-        anim_json = ANIMATIONS[animation]
-        anim_json["device"] = addresses
-        msg = json.dumps(anim_json)
-        print("BeaconClient::send_animation %s" % msg)
+        msg = AnimationGenerator.Get(addresses, animation)
         try:
-            self.sock.sendto(msg.encode(), (MCAST_GRP, MCAST_PORT))
+            self.sock.sendto(msg, (MCAST_GRP, MCAST_PORT))
         except:
             print("Caught socket exception")

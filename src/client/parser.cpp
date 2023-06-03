@@ -6,22 +6,22 @@
 
 std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const char* json)
 {
-    StaticJsonBuffer<2048> jsonBuffer;
+    StaticJsonDocument<2048> doc;
 
-    JsonObject& json_object = jsonBuffer.parseObject(json);
-    if (!json_object.success())
+    auto result = deserializeJson(doc, json);
+    if (result != DeserializationError::Ok)
         return DRETP(nullptr, "failed to parse json message: %s", json);
 
     bool should_parse = true;
 
-    const char* device = json_object["device"];
+    const char* device = doc["device"];
     if (device) {
         LOG("got device %s this_device %s", device, this_device);
         if (strcasecmp(device, this_device) != 0) {
             should_parse = false;
         }
     } else {
-        JsonArray& device_array = json_object["device"];
+        JsonArray device_array = doc["device"];
         for (uint32_t i = 0; i < device_array.size(); i++) {
             should_parse = false;
             device = device_array[i];
@@ -36,7 +36,7 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const cha
     if (!should_parse)
         return nullptr;
 
-    const char* name = json_object["name"];
+    const char* name = doc["name"];
     if (name)
         LOG("got name %s", name);
 
@@ -44,10 +44,10 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const cha
         return DRETP(nullptr, "name is null");
 
     if (strcmp(name, "SimpleProgram") == 0) {
-        uint8_t red = json_object["red"];
-        uint8_t green = json_object["green"];
-        uint8_t blue = json_object["blue"];
-        uint8_t brightness = json_object["brightness"];
+        uint8_t red = doc["red"];
+        uint8_t green = doc["green"];
+        uint8_t blue = doc["blue"];
+        uint8_t brightness = doc["brightness"];
         LOG("got SimpleProgram color %u:%u:%u brightness %u", red, green, blue, brightness);
 
         return SimpleProgram::Create(red, green, blue, brightness);
@@ -56,13 +56,13 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const cha
     if (strcmp(name, "AnimatedProgram") == 0) {
         auto program = std::unique_ptr<AnimatedProgram>(new AnimatedProgram());
 
-        if (json_object.containsKey("segments")) {
+        if (doc.containsKey("segments")) {
             auto segments = std::vector<std::unique_ptr<AnimatedProgram::Segment>>();
 
-            JsonArray& array = json_object["segments"];
+            JsonArray array = doc["segments"];
 
             for (uint32_t i = 0; i < array.size(); i++) {
-                JsonObject& json_segment = array[i];
+                JsonObject json_segment = array[i];
 
                 auto segment =
                     std::unique_ptr<AnimatedProgram::Segment>(new AnimatedProgram::Segment);
@@ -72,12 +72,12 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const cha
                 uint32_t duration = json_segment["duration"];
 
                 if (json_segment.containsKey("0")) {
-                    JsonObject& object = json_segment["0"];
+                    JsonObject object = json_segment["0"];
                     segment->animation[0] = Animation{object["s"], object["e"], duration};
                 }
 
                 if (json_segment.containsKey("1")) {
-                    JsonObject& object = json_segment["1"];
+                    JsonObject object = json_segment["1"];
                     segment->animation[1] = Animation{object["s"], object["e"], duration};
                 }
 
@@ -115,13 +115,13 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const cha
             program->SetSegments(std::move(segments));
         }
 
-        if (json_object.containsKey("brightness")) {
+        if (doc.containsKey("brightness")) {
             auto sequence = std::unique_ptr<AnimationSequence>(new AnimationSequence());
 
-            JsonArray& brightness_array = json_object["brightness"];
+            JsonArray brightness_array = doc["brightness"];
 
             for (uint32_t i = 0; i < brightness_array.size(); i++) {
-                JsonObject& brightness = brightness_array[i];
+                JsonObject brightness = brightness_array[i];
                 sequence->Add(Animation{brightness["s"], brightness["e"], brightness["d"]});
             }
 

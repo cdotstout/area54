@@ -35,25 +35,31 @@ public:
     {
         sequence_.push_back(animation);
         duration_ += animation.duration();
-        iter_ = sequence_.begin();
     }
 
     // time must be nondecreasing
     uint32_t get(uint32_t time)
     {
-        uint32_t time_delta = time - time_base_;
-        uint32_t value = iter_->get(time_delta);
+        if (time > duration_ && !loop_)
+            return 0;
 
-        if (time_delta >= iter_->duration()) {
-            auto next = iter_ + 1;
-            if (next == sequence_.end() && loop_)
-                next = sequence_.begin();
-            if (next != sequence_.end()) {
-                time_base_ += iter_->duration();
-                iter_ = next;
+        int relative_time = time % duration_;
+
+        std::vector<Animation>::iterator iter = sequence_.begin();
+        while (iter != sequence_.end()) {
+            if (relative_time < iter->duration()) {
+                return iter->get(relative_time);
             }
+            relative_time -= iter->duration();
+            if (relative_time < 0) {
+                // SHouldn't happen
+                return 0;
+            }
+            iter++;
         }
-        return value;
+
+        // Also shouldn't happen
+        return 0;
     }
 
     uint32_t duration() { return duration_; }
@@ -61,7 +67,5 @@ public:
 private:
     bool loop_;
     std::vector<Animation> sequence_;
-    std::vector<Animation>::iterator iter_;
     uint32_t duration_ = 0;
-    uint32_t time_base_ = 0;
 };

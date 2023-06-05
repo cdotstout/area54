@@ -16,6 +16,53 @@ bool App::Init()
     led_->Show();
     delay(500);
 
+    if (!InitInvitePulse())
+        return false;
+
+    return true;
+}
+
+bool App::InitInvitePulse()
+{
+    const char* kInvitePulseJson = R"(
+    {
+        "name": "AnimatedProgram",
+        "segments": [
+            {
+                "duration": "3000",
+                "keepalive": "0",
+                "0": { "s": "0", "e": "0" },
+                "1": { "s": "53", "e": "53" },
+                "hue_grad": { "s": "240", "e": "240" }
+            },
+            {
+                "start_time": "3000",
+                "duration": "3000",
+                "keepalive": "0",
+                "0": { "s": "0", "e": "0" },
+                "1": { "s": "53", "e": "53" },
+                "hue_grad": { "s": "160", "e": "160" }
+            }
+        ],
+        "brightness": [
+            { "s": "0", "e": "255", "d": "1000" },
+            { "s": "255", "e": "255", "d": "1000" },
+            { "s": "255", "e": "0", "d": "1000" },
+            { "s": "0", "e": "255", "d": "1000" },
+            { "s": "255", "e": "255", "d": "1000" },
+            { "s": "255", "e": "0", "d": "1000" }
+        ]
+    })";
+
+    invite_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kInvitePulseJson);
+    if (!invite_pulse_)
+        return false;
+
+    return true;
+}
+
+bool App::NetworkInit()
+{
     network_ = Network::Create();
     network_->Connect();
 
@@ -57,8 +104,17 @@ bool App::Init()
 
 void App::Update(uint32_t time_ms)
 {
+    if (!program_) {
+        program_ = invite_pulse_.get();
+    }
+
+    uint32_t program_duration = program_->get_duration();
+    if (program_duration && (time_ms - program_->time_base() > program_duration)) {
+        program_->Start(time_ms);
+    }
+
     if (pending_program_) {
-        program_ = std::move(pending_program_);
+        program_ = pending_program_.get();
         program_->Start(time_ms);
     }
 
@@ -79,13 +135,15 @@ void App::Update(uint32_t time_ms)
 
     led_->Show();
 
-    if (!transport_->IsConnected()) {
-        LOG("lost connection, attempting to reconnect");
-        transport_->Connect();
-    }
+    if (transport_) {
+        if (!transport_->IsConnected()) {
+            LOG("lost connection, attempting to reconnect");
+            transport_->Connect();
+        }
 
-    if (transport_->IsConnected())
-        transport_->Loop();
+        if (transport_->IsConnected())
+            transport_->Loop();
+    }
 
     if (http_server_)
         http_server_->Loop();

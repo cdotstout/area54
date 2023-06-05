@@ -14,10 +14,13 @@ public:
     void Update(uint32_t time_ms);
 
 private:
+    bool NetworkInit();
+    bool InitInvitePulse();
     void Callback(char* topic, uint8_t* payload, unsigned int length);
 
     std::unique_ptr<Led> led_;
-    std::unique_ptr<Program> program_;
+    Program* program_ = nullptr;
+    std::unique_ptr<Program> invite_pulse_;
     std::unique_ptr<Program> pending_program_;
     std::unique_ptr<Network> network_;
     std::unique_ptr<Transport> transport_;

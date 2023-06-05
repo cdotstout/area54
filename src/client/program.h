@@ -18,6 +18,8 @@ public:
 
     virtual Led::Segment* GetSegment(uint32_t segment_index) { return nullptr; }
 
+    virtual uint32_t get_duration() { return 0; }
+
     void Start(uint32_t ms)
     {
         time_base_ = ms;

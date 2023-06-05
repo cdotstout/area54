@@ -47,6 +47,8 @@ public:
         return segments_[segment_index].get();
     }
 
+    uint32_t get_duration() override { return brightness_sequence_->duration(); }
+
 private:
     std::unique_ptr<AnimationSequence> brightness_sequence_;
     std::vector<std::unique_ptr<Segment>> segments_;

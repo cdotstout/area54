@@ -85,7 +85,7 @@ std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const cha
                     segment->start_time = json_segment["start_time"];
                 }
                 if (json_segment.containsKey("keepalive")) {
-                    segment->keepalive = json_segment["keepalive"];
+                    segment->keepalive = (int)json_segment["keepalive"];
                 }
 
                 if (json_segment.containsKey("hue_grad")) {

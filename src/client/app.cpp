@@ -35,7 +35,7 @@ bool App::Init()
 
 bool App::InitPrograms()
 {
-    invite_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kInvitePulseJson);
+    invite_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kInvitePulse);
     if (!invite_pulse_)
         return false;
 
@@ -100,9 +100,17 @@ bool App::IsPresenceDetected() {
     return present;
 }
 
+void App::SetState(State state, uint32_t ms) {
+    state_ = state;
+    state_start_ms_ = ms;
+    const char* state_names[] = { "IDLE", "PREPARE_TO_SEND", "SENDING", "SENT"};
+    Serial.println("SetState " + String(state_names[state_]));
+}
+
 void App::EnterIdleState(uint32_t ms) {
     SetState(IDLE, ms);
     program_[0] = invite_pulse_.get();
+    buildup_pulse_color_ = kIdleHue;
 }
 
 void App::UpdateIdleState(uint32_t ms) {
@@ -120,6 +128,15 @@ void App::UpdateIdleState(uint32_t ms) {
     }
 }
 
+void App::SetBuildupPulseColor(int hue) {
+    auto program = static_cast<AnimatedProgram*>(buildup_pulse_.get());
+
+    for (int i = 0; i < program->segment_count(); i++) {
+        auto segment = static_cast<AnimatedProgram::Segment*>(program->GetSegment(i));
+        segment->hue_gradient[0] = segment->hue_gradient[1] = hue;
+    }
+}
+
 // return opacity for strip 0
 int App::UpdatePrepareToSendState(uint32_t ms) {
     // Fade out the idle animation
@@ -133,11 +150,31 @@ int App::UpdatePrepareToSendState(uint32_t ms) {
     program_[0] = buildup_pulse_.get();
     program_[0]->Start(ms);
 
+    SetBuildupPulseColor(buildup_pulse_color_);
+    if (buildup_pulse_color_ < 260) {
+        buildup_pulse_color_ += 1;
+    }
+    Serial.println("pulse color: " + String(buildup_pulse_color_));
+
     return 255;
 }
 
 void App::UpdateSendingState(uint32_t ms) {
+    // Run to end of animation
+    if (ms - program_[0]->time_base() > program_[0]->get_duration()) {
+        program_[0] = nullptr;
+        SetState(SENT, ms);
+    }
+}
 
+void App::UpdateSentState(uint32_t ms) {
+    if (IsPresenceDetected()) {
+        SetState(PREPARE_TO_SEND, ms);
+        return;
+    }
+    if (ms - state_start_ms_ > 5000) {
+        EnterIdleState(ms);
+    }
 }
 
 void App::Update(uint32_t time_ms)
@@ -155,6 +192,10 @@ void App::Update(uint32_t time_ms)
 
     case SENDING:
         UpdateSendingState(time_ms);
+        break;
+
+    case SENT:
+        UpdateSentState(time_ms);
         break;
     }
 

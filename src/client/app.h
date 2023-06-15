@@ -28,22 +28,21 @@ public:
     void Update(uint32_t time_ms);
 
     static constexpr int kNumStrips = 3;
+    static constexpr int kIdleHue = 150;
 
 private:
     bool NetworkInit();
     bool InitPrograms();
     void Callback(char* topic, uint8_t* payload, unsigned int length);
 
-    void SetState(State state, uint32_t ms) {
-        state_ = state;
-        state_start_ms_ = ms;
-    }
-
+    void SetState(State state, uint32_t ms);
     void EnterIdleState(uint32_t ms);
     void UpdateIdleState(uint32_t time_ms);
     int  UpdatePrepareToSendState(uint32_t time_ms);
     void UpdateSendingState(uint32_t ms);
+    void UpdateSentState(uint32_t ms);
     bool IsPresenceDetected();
+    void SetBuildupPulseColor(int hue);
 
     std::unique_ptr<Led> led_[kNumStrips];
     Program* program_[kNumStrips] { nullptr, nullptr, nullptr };
@@ -57,4 +56,5 @@ private:
     std::vector<char> device_addr_;
     State state_ = IDLE;
     uint32_t state_start_ms_ = 0;
+    int buildup_pulse_color_ = kIdleHue;
 };

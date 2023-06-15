@@ -3,8 +3,6 @@
 
 std::unique_ptr<App> g_app;
 
-const int FSR_PIN = 32;
-
 void setup()
 {
     Serial.begin(115200);
@@ -13,8 +11,6 @@ void setup()
     Serial.println("setup");
 
     LOG("setup begin");
-
-    pinMode(FSR_PIN, INPUT);
 }
 
 void loop()
@@ -38,8 +34,4 @@ void loop()
         LOG("tick");
         g_frame_start = time_ms;
     }
-
-    int v = analogRead(FSR_PIN);
-
-    Serial.println("loop: v=" + String(v));
 }

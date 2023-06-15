@@ -1,4 +1,5 @@
 #include "app.h"
+#include "Arduino.h"
 #include "animated_program.h"
 #include "invite_pulse.h"
 #include "buildup_pulse.h"
@@ -8,10 +9,10 @@
 #include <cstdint>
 #include <cstring>
 
-extern "C" void delay(long unsigned int ms);
-
 bool App::Init()
 {
+    pinMode(FSR_PIN, INPUT);
+
     for (int i = 0; i < kNumStrips; i++) {
         led_[i] = Led::CreateStrip(i);
         led_[i]->Init();
@@ -91,7 +92,12 @@ bool App::NetworkInit()
 }
 
 bool App::IsPresenceDetected() {
-    return false;
+    int v = analogRead(FSR_PIN);
+    bool present = v > 2000;
+    if (present) {
+        Serial.println("present: v=" + String(v));
+    }
+    return present;
 }
 
 void App::EnterIdleState(uint32_t ms) {

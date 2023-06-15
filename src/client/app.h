@@ -7,6 +7,8 @@
 #include "transport.h"
 #include <memory>
 
+constexpr int FSR_PIN = 32;
+
 enum State {
     // From IDLE: subtle glow animation. If presence detected, go to PREPARE_TO_SEND.
     IDLE,

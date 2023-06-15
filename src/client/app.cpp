@@ -1,5 +1,7 @@
 #include "app.h"
 #include "animated_program.h"
+#include "invite_pulse.h"
+#include "buildup_pulse.h"
 #include "log.h"
 #include "parser.h"
 #include "transport.h"
@@ -10,52 +12,34 @@ extern "C" void delay(long unsigned int ms);
 
 bool App::Init()
 {
-    led_ = Led::Create();
-    led_->Init();
-    led_->FillColor(255, 0, 0);
-    led_->Show();
+    for (int i = 0; i < kNumStrips; i++) {
+        led_[i] = Led::CreateStrip(i);
+        led_[i]->Init();
+        switch (i) {
+            case 0: led_[i]->FillColor(255, 0, 0); break;
+            case 1: led_[i]->FillColor(0, 255, 0); break;
+            case 2: led_[i]->FillColor(0, 0, 255); break;
+        }
+    }
+    Led::Show();
     delay(500);
 
-    if (!InitInvitePulse())
+    if (!InitPrograms())
         return false;
+
+    EnterIdleState(0);
 
     return true;
 }
 
-bool App::InitInvitePulse()
+bool App::InitPrograms()
 {
-    const char* kInvitePulseJson = R"(
-    {
-        "name": "AnimatedProgram",
-        "segments": [
-            {
-                "duration": "3000",
-                "keepalive": "0",
-                "0": { "s": "0", "e": "0" },
-                "1": { "s": "53", "e": "53" },
-                "hue_grad": { "s": "240", "e": "240" }
-            },
-            {
-                "start_time": "3000",
-                "duration": "3000",
-                "keepalive": "0",
-                "0": { "s": "0", "e": "0" },
-                "1": { "s": "53", "e": "53" },
-                "hue_grad": { "s": "160", "e": "160" }
-            }
-        ],
-        "brightness": [
-            { "s": "0", "e": "255", "d": "1000" },
-            { "s": "255", "e": "255", "d": "1000" },
-            { "s": "255", "e": "0", "d": "1000" },
-            { "s": "0", "e": "255", "d": "1000" },
-            { "s": "255", "e": "255", "d": "1000" },
-            { "s": "255", "e": "0", "d": "1000" }
-        ]
-    })";
-
     invite_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kInvitePulseJson);
     if (!invite_pulse_)
+        return false;
+
+    buildup_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kBuildupPulseJson);
+    if (!buildup_pulse_)
         return false;
 
     return true;
@@ -70,8 +54,10 @@ bool App::NetworkInit()
     http_server_ = HttpServer::Create();
 #endif
 
-    led_->FillColor(0, 255, 0);
-    led_->Show();
+    for (int i = 0; i < kNumStrips; i++) {
+        led_[i]->FillColor(0, 255, 0);
+    }
+    Led::Show();
     delay(500);
 
     uint8_t mac[7]{};
@@ -96,44 +82,100 @@ bool App::NetworkInit()
         delay(5000);
     }
 
-    led_->FillColor(0, 0, 255);
-    led_->Show();
+    for (int i = 0; i < kNumStrips; i++) {
+        led_[i]->FillColor(0, 0, 255);
+    }
+    Led::Show();
 
     return true;
 }
 
+bool App::IsPresenceDetected() {
+    return false;
+}
+
+void App::EnterIdleState(uint32_t ms) {
+    SetState(IDLE, ms);
+    program_[0] = invite_pulse_.get();
+}
+
+void App::UpdateIdleState(uint32_t ms) {
+    uint32_t program_duration = program_[0]->get_duration();
+
+    // loop the pulsing animation
+    if (program_duration && (ms - program_[0]->time_base() > program_duration)) {
+        program_[0]->Start(ms);
+    }
+
+    if (IsPresenceDetected()) {
+        SetState(PREPARE_TO_SEND, ms);
+
+        // TODO: send a message to allow for synchronization with others.
+    }
+}
+
+// return opacity for strip 0
+int App::UpdatePrepareToSendState(uint32_t ms) {
+    // Fade out the idle animation
+    int opacity = 255 - 255 * (ms - state_start_ms_) / 250;
+    if (opacity > 0)
+        return opacity;
+
+    // After fade out completes, transmission begins with a buildup pulse.
+    SetState(SENDING, ms);
+
+    program_[0] = buildup_pulse_.get();
+    program_[0]->Start(ms);
+
+    return 255;
+}
+
+void App::UpdateSendingState(uint32_t ms) {
+
+}
+
 void App::Update(uint32_t time_ms)
 {
-    if (!program_) {
-        program_ = invite_pulse_.get();
+    int opacity = 255;
+
+    switch (state_) {
+    case IDLE:
+        UpdateIdleState(time_ms);
+        break;
+
+    case PREPARE_TO_SEND:
+        opacity = UpdatePrepareToSendState(time_ms);
+        break;
+
+    case SENDING:
+        UpdateSendingState(time_ms);
+        break;
     }
 
-    uint32_t program_duration = program_->get_duration();
-    if (program_duration && (time_ms - program_->time_base() > program_duration)) {
-        program_->Start(time_ms);
-    }
+    for (int i = 0; i < kNumStrips; i++) {
+        led_[i]->FillColor(0, 0, 0);
 
-    if (pending_program_) {
-        program_ = pending_program_.get();
-        program_->Start(time_ms);
-    }
+        if (program_[i]) {
+            for (uint32_t segment_index = 0; segment_index < program_[i]->segment_count();
+                segment_index++) {
+                auto segment = program_[i]->GetSegment(segment_index);
+                if (segment)
+                    led_[i]->DrawSegment(segment, time_ms - program_[i]->time_base());
+            }
 
-    if (program_) {
-        led_->FillColor(0, 0, 0);
+            uint8_t brightness;
+            program_[i]->GetBrightness(time_ms - program_[i]->time_base(), &brightness);
 
-        for (uint32_t segment_index = 0; segment_index < program_->segment_count();
-             segment_index++) {
-            auto segment = program_->GetSegment(segment_index);
-            if (segment)
-                led_->DrawSegment(segment, time_ms - program_->time_base());
+            // Opacity applied only to strip 0
+            // if (i == 0 && opacity < 255) {
+            //     int temp = ((int)brightness * opacity) >> 8; // divide by 255/256
+            //     brightness = temp;
+            // }
+
+            led_[i]->SetBrightness(brightness);
         }
-
-        uint8_t brightness;
-        program_->GetBrightness(time_ms - program_->time_base(), &brightness);
-        led_->SetBrightness(brightness);
     }
-
-    led_->Show();
+    Led::Show();
 
     if (transport_) {
         if (!transport_->IsConnected()) {

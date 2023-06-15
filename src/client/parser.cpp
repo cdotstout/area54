@@ -6,7 +6,7 @@
 
 std::unique_ptr<Program> Parser::ParseProgram(const char* this_device, const char* json)
 {
-    StaticJsonDocument<2048> doc;
+    StaticJsonDocument<4096> doc;
 
     auto result = deserializeJson(doc, json);
     if (result != DeserializationError::Ok)

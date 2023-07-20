@@ -23,7 +23,6 @@ public:
     void Start(uint32_t ms)
     {
         time_base_ = ms;
-        LOG("Got new timebase %u", time_base_);
     }
 
     uint32_t time_base() { return time_base_; }

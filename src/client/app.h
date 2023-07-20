@@ -17,8 +17,10 @@ enum State {
     PREPARE_TO_SEND,
     // Animate the transmission.  When animation completes, go to SENT.
     SENDING,
-    // Nothing lit. When presence removed, then go to IDLE.
+    // Nothing lit. When presence removed, go to READY
     SENT,
+    // Ready is like IDLE, but no glowy animation.  Lasts a brief time, then proceeds to IDLE.
+    READY,
 };
 
 class App {
@@ -35,13 +37,15 @@ private:
     bool InitPrograms();
     void Callback(char* topic, uint8_t* payload, unsigned int length);
 
+    void StartIfPresent(uint32_t ms);
     void SetState(State state, uint32_t ms);
     void EnterIdleState(uint32_t ms);
     void UpdateIdleState(uint32_t time_ms);
     int  UpdatePrepareToSendState(uint32_t time_ms);
     void UpdateSendingState(uint32_t ms);
     void UpdateSentState(uint32_t ms);
-    bool IsPresenceDetected();
+    void UpdateReadyState(uint32_t ms);
+    void UpdatePresence(uint32_t ms);
     void SetBuildupPulseColor(int hue);
 
     std::unique_ptr<Led> led_[kNumStrips];
@@ -56,5 +60,7 @@ private:
     std::vector<char> device_addr_;
     State state_ = IDLE;
     uint32_t state_start_ms_ = 0;
+    uint32_t presence_detected_ms_ = 0;
+    uint32_t presence_acquired_ms_ = 0;
     int buildup_pulse_color_ = kIdleHue;
 };

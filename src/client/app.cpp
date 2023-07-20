@@ -91,15 +91,6 @@ bool App::NetworkInit()
     return true;
 }
 
-bool App::IsPresenceDetected() {
-    int v = analogRead(FSR_PIN);
-    bool present = v > 2000;
-    if (present) {
-        Serial.println("present: v=" + String(v));
-    }
-    return present;
-}
-
 void App::SetState(State state, uint32_t ms) {
     state_ = state;
     state_start_ms_ = ms;
@@ -110,6 +101,7 @@ void App::SetState(State state, uint32_t ms) {
 void App::EnterIdleState(uint32_t ms) {
     SetState(IDLE, ms);
     program_[0] = invite_pulse_.get();
+    program_[0]->Start(ms);
     buildup_pulse_color_ = kIdleHue;
 }
 
@@ -121,10 +113,30 @@ void App::UpdateIdleState(uint32_t ms) {
         program_[0]->Start(ms);
     }
 
-    if (IsPresenceDetected()) {
+    StartIfPresent(ms);
+}
+
+void App::StartIfPresent(uint32_t ms) {
+    if (presence_detected_ms_ > presence_acquired_ms_) {
+        presence_acquired_ms_ = presence_detected_ms_;
         SetState(PREPARE_TO_SEND, ms);
 
         // TODO: send a message to allow for synchronization with others.
+    }
+}
+
+void App::UpdatePresence(uint32_t ms) {
+    int v = analogRead(FSR_PIN);
+
+    Serial.println("v=" + String(v));
+    if (presence_detected_ms_) {
+        if (ms - presence_detected_ms_ > 500 && v < 500) {
+            presence_detected_ms_ = 0;
+            Serial.println("PresenceRemoved: v=" + String(v));
+        }
+    } else if (v > 1500) {
+        presence_detected_ms_ = ms;
+        Serial.println("PresenceDetected: v=" + String(v));
     }
 }
 
@@ -140,9 +152,9 @@ void App::SetBuildupPulseColor(int hue) {
 // return opacity for strip 0
 int App::UpdatePrepareToSendState(uint32_t ms) {
     // Fade out the idle animation
-    int opacity = 255 - 255 * (ms - state_start_ms_) / 250;
-    if (opacity > 0)
-        return opacity;
+    // int opacity = 255 - 255 * (ms - state_start_ms_) / 250;
+    // if (opacity > 0)
+    //     return opacity;
 
     // After fade out completes, transmission begins with a buildup pulse.
     SetState(SENDING, ms);
@@ -168,10 +180,16 @@ void App::UpdateSendingState(uint32_t ms) {
 }
 
 void App::UpdateSentState(uint32_t ms) {
-    if (IsPresenceDetected()) {
-        SetState(PREPARE_TO_SEND, ms);
-        return;
+    StartIfPresent(ms);
+
+    if (state_ == SENT && presence_detected_ms_ == 0) {
+        SetState(READY, ms);
     }
+}
+
+void App::UpdateReadyState(uint32_t ms) {
+    StartIfPresent(ms);
+
     if (ms - state_start_ms_ > 5000) {
         EnterIdleState(ms);
     }
@@ -180,6 +198,8 @@ void App::UpdateSentState(uint32_t ms) {
 void App::Update(uint32_t time_ms)
 {
     int opacity = 255;
+
+    UpdatePresence(time_ms);
 
     switch (state_) {
     case IDLE:
@@ -196,6 +216,10 @@ void App::Update(uint32_t time_ms)
 
     case SENT:
         UpdateSentState(time_ms);
+        break;
+
+    case READY:
+        UpdateReadyState(time_ms);
         break;
     }
 

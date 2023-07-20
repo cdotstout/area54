@@ -19,8 +19,8 @@ public:
 
     bool Connect() override;
 
-    void Loop() override 
-    { 
+    void Loop() override
+    {
     	int packetSize = wifi_udp_.parsePacket();
     	if (packetSize) {
     		//LOG("*** UDP available size %d buffer size %d\n", packetSize, buffer_.size());
@@ -29,11 +29,31 @@ public:
     			if (ret != packetSize) {
     				LOG("read failed: %d", ret);
     				return;
-    			} 
+    			}
     			callback_("topic", buffer_.data(), packetSize);
     		}
     	}
     }
+
+	void Send(std::vector<uint8_t>& bytes) {
+		//IPAddress server(192, 168, 1, 2); // server on wifi
+		IPAddress server(192, 168, 1, 3); // server on ethernet
+		int port = 5005;
+		int result = wifi_udp_.beginPacket(server, port);
+		if (!result) {
+			LOG("beginPacket failed");
+			return;
+		}
+		size_t count_written = wifi_udp_.write(bytes.data(), bytes.size());
+		if (count_written != bytes.size()) {
+			LOG("count_written %zd != bytes.size() % zd", count_written, bytes.size());
+		}
+		result = wifi_udp_.endPacket();
+		if (!result) {
+			LOG("endPacket failed");
+		}
+		LOG("Send complete");
+	}
 
 private:
     void callback(char* topic, byte* payload, unsigned int length);
@@ -46,10 +66,10 @@ private:
 bool UdpTransport::Connect()
 {
 	//if (!wifi_udp_.beginMulticast(IPAddress(239,255,255,255), 3333)) {
-	if (!wifi_udp_.beginMulticast(IPAddress(224,1,1,1), 5007)) {
-		LOG("beginMulticast failed");
-		return false;
-	}
+	// if (!wifi_udp_.beginMulticast(IPAddress(224,1,1,1), 5007)) {
+	// 	LOG("beginMulticast failed");
+	// 	return false;
+	// }
     return true;
 }
 

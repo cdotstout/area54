@@ -7,7 +7,9 @@ class WifiNetwork : public Network {
 public:
     // static constexpr char* kSsid = "area54";
     // static constexpr char* kPassword = "40420233";
-    static constexpr char* kSsid = "Robot cart";
+    // static constexpr char* kSsid = "Robot cart";
+    // static constexpr char* kPassword = "robodj9000";
+    static constexpr char* kSsid = "pk-step-1";
     static constexpr char* kPassword = "robodj9000";
 
     void Connect() override;

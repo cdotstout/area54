@@ -28,6 +28,9 @@ bool App::Init()
     if (!InitPrograms())
         return false;
 
+    if (!NetworkInit())
+        return false;
+
     EnterIdleState(0);
 
     return true;
@@ -128,7 +131,7 @@ void App::StartIfPresent(uint32_t ms) {
 void App::UpdatePresence(uint32_t ms) {
     int v = analogRead(FSR_PIN);
 
-    Serial.println("v=" + String(v));
+    //Serial.println("v=" + String(v));
     if (presence_detected_ms_) {
         if (ms - presence_detected_ms_ > 500 && v < 500) {
             presence_detected_ms_ = 0;
@@ -166,7 +169,7 @@ int App::UpdatePrepareToSendState(uint32_t ms) {
     if (buildup_pulse_hue_ < 240) {
         buildup_pulse_hue_ += 1;
     }
-    Serial.println("pulse hue: " + String(buildup_pulse_hue_));
+    //Serial.println("pulse hue: " + String(buildup_pulse_hue_));
 
     return 255;
 }
@@ -176,6 +179,13 @@ void App::UpdateSendingState(uint32_t ms) {
     if (ms - program_[0]->time_base() > program_[0]->get_duration()) {
         program_[0] = nullptr;
         SetState(SENT, ms);
+
+        // Inform the server
+        if (transport_) {
+            std::vector<uint8_t> bytes { buildup_pulse_hue_ };
+            Serial.println("sent: " + String(buildup_pulse_hue_));
+            transport_->Send(bytes);
+        }
     }
 }
 

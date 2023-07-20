@@ -11,6 +11,7 @@ public:
     virtual bool IsConnected() = 0;
     virtual bool Connect() = 0;
     virtual void Loop() = 0;
+    virtual void Send(std::vector<uint8_t>& bytes) = 0;
 
     static std::unique_ptr<Transport>
     Create(std::vector<std::string> topics,

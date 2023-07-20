@@ -46,7 +46,7 @@ private:
     void UpdateSentState(uint32_t ms);
     void UpdateReadyState(uint32_t ms);
     void UpdatePresence(uint32_t ms);
-    void SetBuildupPulseColor(int hue);
+    void SetBuildupPulseColor(uint8_t hue);
 
     std::unique_ptr<Led> led_[kNumStrips];
     Program* program_[kNumStrips] { nullptr, nullptr, nullptr };
@@ -62,5 +62,5 @@ private:
     uint32_t state_start_ms_ = 0;
     uint32_t presence_detected_ms_ = 0;
     uint32_t presence_acquired_ms_ = 0;
-    int buildup_pulse_color_ = kIdleHue;
+    uint8_t buildup_pulse_hue_ = kIdleHue;
 };

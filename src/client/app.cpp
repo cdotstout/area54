@@ -102,7 +102,7 @@ void App::EnterIdleState(uint32_t ms) {
     SetState(IDLE, ms);
     program_[0] = invite_pulse_.get();
     program_[0]->Start(ms);
-    buildup_pulse_color_ = kIdleHue;
+    buildup_pulse_hue_ = kIdleHue;
 }
 
 void App::UpdateIdleState(uint32_t ms) {
@@ -140,7 +140,7 @@ void App::UpdatePresence(uint32_t ms) {
     }
 }
 
-void App::SetBuildupPulseColor(int hue) {
+void App::SetBuildupPulseColor(uint8_t hue) {
     auto program = static_cast<AnimatedProgram*>(buildup_pulse_.get());
 
     for (int i = 0; i < program->segment_count(); i++) {
@@ -162,11 +162,11 @@ int App::UpdatePrepareToSendState(uint32_t ms) {
     program_[0] = buildup_pulse_.get();
     program_[0]->Start(ms);
 
-    SetBuildupPulseColor(buildup_pulse_color_);
-    if (buildup_pulse_color_ < 260) {
-        buildup_pulse_color_ += 1;
+    SetBuildupPulseColor(buildup_pulse_hue_);
+    if (buildup_pulse_hue_ < 240) {
+        buildup_pulse_hue_ += 1;
     }
-    Serial.println("pulse color: " + String(buildup_pulse_color_));
+    Serial.println("pulse hue: " + String(buildup_pulse_hue_));
 
     return 255;
 }

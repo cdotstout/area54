@@ -53,6 +53,7 @@ private:
 
     std::unique_ptr<Program> invite_pulse_;
     std::unique_ptr<Program> buildup_pulse_;
+    std::unique_ptr<Program> transmit_pulse_;
     std::unique_ptr<Program> pending_program_;
     std::unique_ptr<Network> network_;
     std::unique_ptr<Transport> transport_;

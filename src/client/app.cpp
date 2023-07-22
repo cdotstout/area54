@@ -3,6 +3,7 @@
 #include "animated_program.h"
 #include "invite_pulse.h"
 #include "buildup_pulse.h"
+#include "transmit_pulse.h"
 #include "log.h"
 #include "parser.h"
 #include "transport.h"
@@ -44,6 +45,10 @@ bool App::InitPrograms()
 
     buildup_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kBuildupPulseJson);
     if (!buildup_pulse_)
+        return false;
+
+    transmit_pulse_ = Parser::ParseProgram(/*device=*/nullptr, kTransmitPulseJson);
+    if (!transmit_pulse_)
         return false;
 
     return true;
@@ -144,11 +149,15 @@ void App::UpdatePresence(uint32_t ms) {
 }
 
 void App::SetBuildupPulseColor(uint8_t hue) {
-    auto program = static_cast<AnimatedProgram*>(buildup_pulse_.get());
+    std::vector<Program*> programs { buildup_pulse_.get(), transmit_pulse_.get() };
 
-    for (int i = 0; i < program->segment_count(); i++) {
-        auto segment = static_cast<AnimatedProgram::Segment*>(program->GetSegment(i));
-        segment->hue_gradient[0] = segment->hue_gradient[1] = hue;
+    for (auto* program : programs) {
+        auto animated_program = static_cast<AnimatedProgram*>(program);
+
+        for (int i = 0; i < animated_program->segment_count(); i++) {
+            auto segment = static_cast<AnimatedProgram::Segment*>(animated_program->GetSegment(i));
+            segment->hue_gradient[0] = segment->hue_gradient[1] = hue;
+        }
     }
 }
 
@@ -167,7 +176,7 @@ int App::UpdatePrepareToSendState(uint32_t ms) {
 
     SetBuildupPulseColor(buildup_pulse_hue_);
     if (buildup_pulse_hue_ < 240) {
-        buildup_pulse_hue_ += 1;
+        buildup_pulse_hue_ += 3;
     }
     //Serial.println("pulse hue: " + String(buildup_pulse_hue_));
 
@@ -176,8 +185,22 @@ int App::UpdatePrepareToSendState(uint32_t ms) {
 
 void App::UpdateSendingState(uint32_t ms) {
     // Run to end of animation
-    if (ms - program_[0]->time_base() > program_[0]->get_duration()) {
+    if (program_[0] && (ms - program_[0]->time_base()) > program_[0]->get_duration()) {
         program_[0] = nullptr;
+
+        program_[1] = transmit_pulse_.get();
+        program_[1]->Start(ms);
+    }
+
+    if (program_[1] && (ms - program_[1]->time_base()) > program_[1]->get_duration()) {
+        program_[1] = nullptr;
+
+        program_[2] = transmit_pulse_.get();
+        program_[2]->Start(ms);
+    }
+
+    if (program_[2] && (ms - program_[2]->time_base()) > program_[2]->get_duration()) {
+        program_[2] = nullptr;
         SetState(SENT, ms);
 
         // Inform the server

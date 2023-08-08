@@ -63,5 +63,6 @@ private:
     uint32_t state_start_ms_ = 0;
     uint32_t presence_detected_ms_ = 0;
     uint32_t presence_acquired_ms_ = 0;
+    uint32_t presence_maybe_removed_ms_ = 0;
     uint8_t buildup_pulse_hue_ = kIdleHue;
 };

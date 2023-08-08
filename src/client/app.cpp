@@ -138,12 +138,22 @@ void App::UpdatePresence(uint32_t ms) {
 
     //Serial.println("v=" + String(v));
     if (presence_detected_ms_) {
-        if (ms - presence_detected_ms_ > 500 && v < 500) {
-            presence_detected_ms_ = 0;
-            Serial.println("PresenceRemoved: v=" + String(v));
+        if (v < 2000) {
+            if (presence_maybe_removed_ms_) {
+                // 120 beats in 60sec is 2 beats/s; don't allow "on every beat" to prevent jumping
+                if (ms - presence_maybe_removed_ms_ > 800) {
+                    presence_detected_ms_ = 0;
+                    Serial.println("PresenceRemoved: v=" + String(v));
+                }
+            } else {
+                presence_maybe_removed_ms_ = ms;
+            }
+        } else {
+            presence_maybe_removed_ms_ = 0;
         }
-    } else if (v > 1500) {
+    } else if (v > 3000) {
         presence_detected_ms_ = ms;
+        presence_maybe_removed_ms_ = 0;
         Serial.println("PresenceDetected: v=" + String(v));
     }
 }
